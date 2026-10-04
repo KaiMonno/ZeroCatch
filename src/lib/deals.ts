@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cacheLife, cacheTag } from "next/cache";
 import { buildSeedDeals } from "@/data/seed-deals";
 import { getSupabase } from "./supabase";
 import type { FilterSlug } from "./tabs";
@@ -14,51 +15,27 @@ export interface DealQuery {
 }
 
 /**
- * Fetch active deals for one tab. Reads from the `active_deals` view, which
- * is also the read contract for the future Expo app. Falls back to seed data
- * when Supabase isn't configured, so the UI runs with zero setup.
+ * Every active deal, cached for about a minute and shared by all visitors. The
+ * feed is small (hundreds of rows at most), so one cached read plus in-memory
+ * filtering keeps Supabase usage flat no matter how many searches people run.
+ * Scrapers can call revalidateTag("deals") to publish immediately.
  */
-export async function getDeals({
-  category,
-  q,
-  filters = [],
-}: DealQuery): Promise<Deal[]> {
+export async function getActiveDeals(): Promise<Deal[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("deals");
+
   const supabase = getSupabase();
-  if (!supabase) return sortDeals(filterLocal(seedFallback(), { category, q, filters }));
+  if (!supabase) return seedFallback();
 
-  let query = supabase.from("active_deals").select("*").eq("category", category);
-
-  const term = sanitizeSearch(q);
-  if (term) {
-    query = query.or(
-      `title.ilike.%${term}%,merchant.ilike.%${term}%,description.ilike.%${term}%`,
-    );
-  }
-  if (filters.includes("no-card")) query = query.eq("requires_credit_card", false);
-  if (filters.includes("no-account")) query = query.eq("requires_account", false);
-  if (filters.includes("ending-soon")) {
-    query = query.lte("expires_at", new Date(Date.now() + ENDING_SOON_MS).toISOString());
-  }
-  // Tab 2 only lists trials that keep the full period after cancelling.
-  if (category === "free_trial") query = query.eq("instant_cancel_safe", true);
-
-  if (category === "free_trial") {
-    query = query.order("trial_duration_days", { ascending: false, nullsFirst: false });
-  } else {
-    query = query.order("is_hero_featured", { ascending: false });
-  }
-  query = query
-    .order("expires_at", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: false });
-
-  const { data, error } = await query;
+  const { data, error } = await supabase.from("active_deals").select("*");
   if (error) throw new Error(`Failed to load deals: ${error.message}`);
   return data as Deal[];
 }
 
-/** Strip characters that would break PostgREST's `or=(…)` filter syntax. */
-function sanitizeSearch(q: string | undefined): string {
-  return (q ?? "").replace(/[,()%*\\:"]/g, " ").trim().slice(0, 80);
+/** Deals for one tab, filtered and sorted at request time. */
+export async function getDeals(query: DealQuery): Promise<Deal[]> {
+  return sortDeals(filterDeals(await getActiveDeals(), query));
 }
 
 function seedFallback(): Deal[] {
@@ -70,13 +47,15 @@ function seedFallback(): Deal[] {
   }));
 }
 
-function filterLocal(deals: Deal[], { category, q, filters = [] }: DealQuery): Deal[] {
+function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQuery): Deal[] {
+  // Re-check the time window: the cached list can be up to a minute old.
   const now = Date.now();
-  const term = sanitizeSearch(q).toLowerCase();
+  const term = (q ?? "").trim().toLowerCase().slice(0, 80);
   return deals.filter((d) => {
     const expires = d.expires_at ? Date.parse(d.expires_at) : null;
     if (d.category !== category) return false;
     if (Date.parse(d.starts_at) > now || (expires !== null && expires <= now)) return false;
+    // Tab 2 only lists trials that keep the full period after cancelling.
     if (category === "free_trial" && !d.instant_cancel_safe) return false;
     if (filters.includes("no-card") && d.requires_credit_card) return false;
     if (filters.includes("no-account") && d.requires_account) return false;
@@ -88,12 +67,14 @@ function filterLocal(deals: Deal[], { category, q, filters = [] }: DealQuery): D
   });
 }
 
+/** Longest trial first, then featured, then soonest-expiring, then newest. */
 function sortDeals(deals: Deal[]): Deal[] {
   const exp = (d: Deal) => (d.expires_at ? Date.parse(d.expires_at) : Infinity);
   return [...deals].sort(
     (a, b) =>
       (b.trial_duration_days ?? -1) - (a.trial_duration_days ?? -1) ||
       Number(b.is_hero_featured) - Number(a.is_hero_featured) ||
-      exp(a) - exp(b),
+      exp(a) - exp(b) ||
+      Date.parse(b.created_at) - Date.parse(a.created_at),
   );
 }

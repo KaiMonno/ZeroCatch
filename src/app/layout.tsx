@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,11 +10,13 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "ZeroCatch: Good-Faith Freebies",
-  description:
-    "Verified, no-strings-attached freebies, instant-cancel free trials, and honest free-with-purchase deals. No affiliate junk, no hidden card traps.",
-  applicationName: "ZeroCatch",
-  appleWebApp: { capable: true, title: "ZeroCatch", statusBarStyle: "black-translucent" },
+  metadataBase: SITE_URL,
+  title: `${SITE_NAME}: ${SITE_TAGLINE}`,
+  description: SITE_DESCRIPTION,
+  applicationName: SITE_NAME,
+  appleWebApp: { capable: true, title: SITE_NAME, statusBarStyle: "black-translucent" },
+  openGraph: { type: "website", siteName: SITE_NAME, url: "/" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

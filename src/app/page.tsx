@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { SearchX } from "lucide-react";
 import { BadgeLegend } from "@/components/badge-legend";
@@ -7,8 +8,19 @@ import { HeroCard } from "@/components/hero-card";
 import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
 import { getDeals } from "@/lib/deals";
+import { SITE_NAME } from "@/lib/site";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { parseFilters, resolveTab } from "@/lib/tabs";
+import { TABS, buildHref, parseFilters, resolveTab } from "@/lib/tabs";
+
+export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
+  const { tab: slug } = await searchParams;
+  const tab = resolveTab(typeof slug === "string" ? slug : undefined);
+  const canonical = { alternates: { canonical: buildHref({ tab: tab.slug }) } };
+  // The home feed keeps the layout's default title and description. The layout's
+  // title template doesn't apply to a page in its own segment, so build it here.
+  if (tab.slug === TABS[0].slug) return canonical;
+  return { ...canonical, title: `${tab.label} · ${SITE_NAME}`, description: tab.blurb };
+}
 
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;

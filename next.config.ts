@@ -8,8 +8,20 @@ const lanAddresses = Object.values(networkInterfaces())
   .filter((iface) => iface?.family === "IPv4" && !iface.internal)
   .map((iface) => iface!.address);
 
+const securityHeaders = [
+  // Outbound deal links never leak which page or search sent the visitor.
+  { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+  { key: "X-Content-Type-Options", value: "nosniff" },
+  { key: "X-Frame-Options", value: "DENY" },
+  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+];
+
 const nextConfig: NextConfig = {
+  cacheComponents: true,
   allowedDevOrigins: lanAddresses,
+  async headers() {
+    return [{ source: "/:path*", headers: securityHeaders }];
+  },
 };
 
 export default nextConfig;

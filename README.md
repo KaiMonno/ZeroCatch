@@ -53,6 +53,37 @@ supabase/           SQL migrations
 scripts/seed.ts     service-role upsert of sample data
 ```
 
+## Roadmap
+
+| Phase | Scope | Status |
+| --- | --- | --- |
+| 1 | Web MVP: three tabs, badges, search and filters, PWA | Done (sample data) |
+| 1.5 | Data pipeline: Python scrapers on GitHub Actions cron, plus a curated deals file | Next |
+| 2 | Expo mobile app on the same Supabase backend | Planned |
+| 3 | Accounts and "Mark as claimed" | Planned |
+
+### Refresh schedule (planned)
+
+GitHub Actions cron runs in UTC.
+
+| Job | Cron (UTC) | Local time | Why |
+| --- | --- | --- | --- |
+| Daily refresh | `5 8 * * *` | 12:05am PST / 1:05am PDT | Picks up new deals overnight for every US time zone. Midnight Eastern would publish next-day deals at 9pm Pacific. |
+| Epic weekly drop | `15 16 * * 4` | Thu after 11am ET | Epic rotates Thursdays at 11am ET. Without this run the hero card would be empty until midnight. |
+
+Deals disappear on time no matter how often scrapers run, because `active_deals` filters on `expires_at` at query time. The schedule only controls how quickly new deals appear.
+
+### Phase 3: accounts and "Mark as claimed"
+
+Signed-in users can mark a deal as claimed, and it disappears from their feed.
+
+- **Auth:** Supabase Auth with magic link plus Google/Apple sign-in, all on the free tier.
+- **Table:** `deal_claims (user_id → auth.users, deal_id → deals ON DELETE CASCADE, claimed_at, PRIMARY KEY (user_id, deal_id))`. RLS limits each user to reading and writing their own rows.
+- **Feed:** a `security_invoker` view adds `NOT EXISTS (… c.user_id = auth.uid())` on top of `active_deals`. Logged-out users get `auth.uid()` = null and see everything, so one view serves both cases, and the Expo app gets the feature at no extra cost.
+- **UX:** a "Claimed ✓" button on each card with an undo toast, plus a "Show claimed" toggle.
+- **Recurring deals:** claims are tied to the deal row, so claiming this week's Epic game doesn't hide next week's.
+- **Optional guest mode:** keep claims in `localStorage` and merge them into the account on sign-up.
+
 ## Phase 2: Expo app
 
 There is no custom API layer to rebuild. A React Native app can create a Supabase client with the same public anon key and query `active_deals` with the same filters as `src/lib/deals.ts`. RLS already keeps that key read-only. If the logic grows, the query builder in `deals.ts` can move into a shared package that both apps import.
