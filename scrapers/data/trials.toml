@@ -1,0 +1,29 @@
+# Curated Instant-Cancel Trials (Tab 2). Adding an entry here IS the approval:
+# the nightly job publishes everything in this file and unpublishes anything
+# removed from it. Only list trials you can cancel right after signing up while
+# keeping the full trial period. Re-check `verified` every few months.
+#
+# Rejected (do not add):
+# - Spotify Premium: its promotional terms say cancelling during a free trial
+#   ends Premium immediately (spotify.com/us/legal/premium-promotional-offer-terms,
+#   checked 2026-10-04).
+
+[[trial]]
+key = "amazon-prime"
+merchant = "Amazon"
+title = "Amazon Prime: 30-Day Free Trial"
+description = "Free shipping, Prime Video and more for 30 days. Card required at signup. End the trial right away from Manage Prime Membership and keep Prime until the trial end date, with no charge."
+url = "https://www.amazon.com/amazonprime"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-04: 30-day trial; cancelling keeps access until trial end (third-party guides; Amazon help page unreachable when checked)"
+
+[[trial]]
+key = "youtube-premium"
+merchant = "YouTube"
+title = "YouTube Premium: 1 Month Free"
+description = "Ad-free YouTube and YouTube Music for a month (new members). Card required at signup. Cancel anytime and keep Premium until the trial period ends."
+url = "https://www.youtube.com/premium"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-04: 1-month trial; Google help: benefits continue until the end of the period after cancelling"

@@ -18,6 +18,8 @@ from .calendar import fetch_calendar_leads
 from .epic import fetch_epic_deals
 from .gog import fetch_gog_leads
 from .steam import fetch_steam_leads
+from .trials import KEY_PREFIX as TRIAL_PREFIX
+from .trials import fetch_trial_deals
 
 
 def _run(name: str, collector: Callable[[], list[dict]], errors: list[str]) -> list[dict]:
@@ -44,12 +46,15 @@ def main() -> int:
         *_run("gog", fetch_gog_leads, errors),
     ]
     print(format_stats(blog_stats))
-    deals = _run("epic", fetch_epic_deals, errors)
+    epic_deals = _run("epic", fetch_epic_deals, errors)
+    trial_deals = _run("trials", fetch_trial_deals, errors)
+    deals = [*epic_deals, *trial_deals]
 
     if args.dry_run:
         print("\nAuto-published deals:")
         for d in deals:
-            print(f"  ★ {d['title']}  {d['starts_at'][:10]} → {d['expires_at'][:10]}  {d['url']}")
+            window = f"{d['starts_at'][:10]} → {d['expires_at'][:10]}" if d.get("expires_at") else "no end date"
+            print(f"  ★ {d['title']}  {window}  {d['url']}")
         print("\nLeads for review:")
         for row in leads:
             food = "🍔" if row["is_food"] else "  "
@@ -58,10 +63,22 @@ def main() -> int:
                 print(f"       → {row['suggested_url']}  {row.get('suggested_starts_at') or ''} {row.get('suggested_expires_at') or ''}")
         print(f"\n{len(deals)} deals, {len(leads)} leads ({sum(r['is_food'] for r in leads)} food)")
     else:
-        try:
-            print(f"\nPublished {supabase_rest.upsert_deals(deals)} first-party deals")
-        except supabase_rest.SupabaseError as err:
-            errors.append(f"publish deals: {err}")
+        # Separate calls: PostgREST bulk upserts need identical keys per row, and
+        # trials omit starts_at so the column default applies.
+        for label, group in (("Epic", epic_deals), ("curated trial", trial_deals)):
+            try:
+                print(f"Published {supabase_rest.upsert_deals(group)} {label} deals")
+            except supabase_rest.SupabaseError as err:
+                errors.append(f"publish {label} deals: {err}")
+        # Only sync when the trials file loaded; an empty list from a parse error
+        # must not unpublish every trial.
+        if not any(e.startswith("trials:") for e in errors):
+            try:
+                removed = supabase_rest.delete_stale_deals(TRIAL_PREFIX, [d["source_key"] for d in trial_deals])
+                if removed:
+                    print(f"Unpublished {removed} trials removed from trials.toml")
+            except supabase_rest.SupabaseError as err:
+                errors.append(f"sync trials: {err}")
         try:
             added = supabase_rest.insert_new_candidates(leads)
             print(f"Queued {added} new leads ({len(leads) - added} already known)")

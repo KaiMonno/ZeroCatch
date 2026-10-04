@@ -3,6 +3,7 @@
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 
 
@@ -65,6 +66,27 @@ def upsert_deals(rows: list[dict]) -> int:
         prefer="resolution=merge-duplicates,return=representation",
     )
     return len(written or [])
+
+
+def delete_stale_deals(prefix: str, keep_keys: list[str]) -> int:
+    """Unpublish deals under `prefix` whose source_key is no longer listed,
+    so removing an entry from a curated file removes it from the site."""
+    url = os.environ["SUPABASE_URL"].rstrip("/")
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    query = f"source_key=like.{urllib.parse.quote(prefix)}*"
+    if keep_keys:
+        listed = ",".join(f'"{k}"' for k in keep_keys)
+        query += f"&source_key=not.in.({urllib.parse.quote(listed)})"
+    request = urllib.request.Request(
+        f"{url}/rest/v1/deals?{query}&select=id",
+        method="DELETE",
+        headers={**_headers(key), "Prefer": "return=representation"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return len(json.loads(response.read() or b"[]"))
+    except urllib.error.HTTPError as err:
+        raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
 
 
 def run_housekeeping() -> dict:
