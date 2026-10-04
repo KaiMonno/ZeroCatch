@@ -26,6 +26,8 @@ export interface DealFields {
   requires_credit_card: boolean;
   instant_cancel_safe: boolean;
   trial_duration_days: number | null;
+  /** Omitted when blank: new deals start now, edits keep their start. */
+  starts_at?: string;
   expires_at: string | null;
   is_hero_featured: boolean;
 }
@@ -37,6 +39,7 @@ export function parseDealForm(form: FormData): { deal: DealFields } | { error: s
   const category = text(form, "category") as DealCategory;
   const url = text(form, "url");
   const trialDays = Number(text(form, "trial_duration_days"));
+  const startsAt = text(form, "starts_at");
   const expiresAt = text(form, "expires_at");
 
   if (!text(form, "title")) return { error: "Title is required." };
@@ -46,7 +49,10 @@ export function parseDealForm(form: FormData): { deal: DealFields } | { error: s
     return { error: "Link to the brand's own page, starting with https://" };
   if (category === "free_trial" && !(Number.isInteger(trialDays) && trialDays > 0))
     return { error: "Free trials need a whole number of days." };
+  if (startsAt && Number.isNaN(Date.parse(startsAt))) return { error: "Invalid start date." };
   if (expiresAt && Number.isNaN(Date.parse(expiresAt))) return { error: "Invalid expiry date." };
+  if (startsAt && expiresAt && Date.parse(expiresAt) <= Date.parse(startsAt))
+    return { error: "The deal must end after it starts." };
 
   return {
     deal: {
@@ -60,6 +66,7 @@ export function parseDealForm(form: FormData): { deal: DealFields } | { error: s
       requires_credit_card: category !== "pure_freebie" && form.has("requires_credit_card"),
       instant_cancel_safe: category === "free_trial" && form.has("instant_cancel_safe"),
       trial_duration_days: category === "free_trial" ? trialDays : null,
+      ...(startsAt && { starts_at: startsAt }),
       expires_at: expiresAt || null,
       is_hero_featured: category === "pure_freebie" && form.has("is_hero_featured"),
     },

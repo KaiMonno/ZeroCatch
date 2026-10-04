@@ -42,6 +42,20 @@ Sample deals in `src/data/seed-deals.ts` are illustrative. Verify each one's rea
 
 Row-level security allows `SELECT` for the anon role only. Writes go through the service-role key, used by the seed script and the scrapers.
 
+## What qualifies
+
+A deal is listed only if it's free (or a clearly stated BOGO / gift-with-purchase for Tab 3) and is **none** of:
+
+- gated behind a **paid** membership (Prime, Circle 360, Walmart+, carrier perks, warehouse clubs, DashPass…). Free loyalty accounts are fine: that's the 🟡 Account Required badge
+- a rebate or cash-back offer (you pay first)
+- limited quantity ("first 50 customers")
+- an in-store event or workshop
+- for one audience only (teachers, students, military…)
+- a contest or sweepstakes
+- a roundup of many deals rather than one deal
+
+The scrapers enforce these rules in `scrapers/classify.py`, and each rejection is logged with its reason code.
+
 ## Lead pipeline and review queue
 
 ```
@@ -53,7 +67,9 @@ GitHub Actions (nightly) ─▶ scrapers/ ─┬─▶ deal_candidates ─▶ /a
 
 | Source | How | Why |
 | --- | --- | --- |
-| Hip2Save RSS | lead → review | Blog posts can't confirm card/terms details |
+| Hip2Save RSS (trial) | lead → review, heavily filtered | ~1% of posts pass the inclusion rules; survivors arrive with brand link and dates prefilled |
+| PR Newswire restaurant + food feeds | lead → review | Brands' own announcements of national freebies: rare, but exact |
+| Food-holiday calendar (`scrapers/data/food_calendar.toml`) | lead → review, 21 days ahead | Recurring no-purchase freebies (Free Cone Day, 7-Eleven Day…); confirm each year with one click |
 | Steam free-to-keep | lead → review | Often DLC that needs a paid base game; no end date in API |
 | GOG giveaway | lead → review | End time is only rendered client-side |
 | Epic Games | **auto-published** as hero | First-party feed with exact start/end times. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule with no extra cron run |

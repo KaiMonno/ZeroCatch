@@ -1,0 +1,75 @@
+# Recurring no-purchase food freebies. The calendar source turns each entry
+# into a pre-filled review-queue lead `lead_days` before it happens; you
+# confirm the brand is running it this year, then click Publish.
+#
+# Date forms:
+#   date = "07-11"                         fixed month-day every year
+#   date = "first friday of june"          nth weekday of a month
+#   date = "~03-19"                        varies by year: "~" = approximate; the
+#                                          lead says to confirm the real date
+#
+# Inclusion bar (same as the rest of ZeroCatch): free with no purchase and no
+# paid membership. `verified` records the last year it was confirmed.
+
+[[event]]
+key = "ihop-pancake-day"
+merchant = "IHOP"
+title = "Free Short Stack on National Pancake Day"
+description = "One free short stack of buttermilk pancakes per guest, dine-in at participating IHOPs (typically 7am–8pm). No purchase needed; IHOP invites an optional charity donation."
+url = "https://www.ihop.com/en/national-pancake-day"
+date = "~03-03"
+verified = "2026-03-03: free short stack, dine-in, no minimum purchase (FOX LA)"
+
+[[event]]
+key = "dq-free-cone-day"
+merchant = "Dairy Queen"
+title = "Free Small Vanilla Cone on Free Cone Day"
+description = "A free small vanilla soft-serve cone at participating non-mall Dairy Queen locations, all day. No purchase necessary."
+url = "https://www.dairyqueen.com/"
+date = "~03-19"
+verified = "2026-03-19: free small vanilla cone, no purchase, non-mall locations (Taste of Home)"
+
+[[event]]
+key = "ritas-first-day-of-spring"
+merchant = "Rita's"
+title = "Free Italian Ice on the First Day of Spring"
+description = "A free regular Italian Ice at participating Rita's locations on the first day of spring. No purchase necessary."
+url = "https://www.ritasice.com/"
+date = "~03-20"
+verified = "2026-03-20: free 6oz Italian Ice at 600+ locations (MyChesCo)"
+
+[[event]]
+key = "ben-jerrys-free-cone-day"
+merchant = "Ben & Jerry's"
+title = "Free Scoop on Ben & Jerry's Free Cone Day"
+description = "A free single scoop of any flavor at participating Ben & Jerry's scoop shops (typically 12–8pm). No purchase or code needed."
+url = "https://www.benjerry.com/"
+date = "~04-14"
+verified = "2026-04-14: free single scoop, no purchase (AOL)"
+
+[[event]]
+key = "krispy-kreme-doughnut-day"
+merchant = "Krispy Kreme"
+title = "Free Doughnut on National Doughnut Day"
+description = "A free doughnut of your choice from the classic menu at participating U.S. Krispy Kreme shops, in-shop or drive-thru. No purchase necessary."
+url = "https://www.krispykreme.com/"
+date = "first friday of june"
+verified = "2026-06-05: free doughnut, no purchase (Krispy Kreme investor release)"
+
+[[event]]
+key = "7-eleven-slurpee-day"
+merchant = "7-Eleven"
+title = "Free Small Slurpee on 7-Eleven Day"
+description = "A free small Slurpee at participating 7-Eleven, Speedway and Stripes stores on 7/11. No purchase required."
+url = "https://www.7-eleven.com/"
+date = "07-11"
+verified = "2026-07-11: free small Slurpee, no purchase (NBC)"
+
+[[event]]
+key = "krispy-kreme-halloween"
+merchant = "Krispy Kreme"
+title = "Free Doughnut When You Wear a Costume on Halloween"
+description = "Wear a costume to a participating U.S. Krispy Kreme shop on Halloween for a free Original Glazed or Classic Ring doughnut. No purchase necessary."
+url = "https://www.krispykreme.com/"
+date = "10-31"
+verified = "2025-10-31: free doughnut in costume, no purchase (Business Wire release)"

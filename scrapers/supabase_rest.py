@@ -35,6 +35,12 @@ def _post(path: str, body: object, prefer: str | None = None) -> object:
         raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
 
 
+def _uniform(rows: list[dict]) -> list[dict]:
+    """PostgREST bulk inserts need identical keys in every row."""
+    keys = {k for row in rows for k in row}
+    return [{k: row.get(k) for k in keys} for row in rows]
+
+
 def insert_new_candidates(rows: list[dict]) -> int:
     """Insert leads, skipping any source_key already queued (so re-runs never
     reset a reviewed candidate back to pending). Returns rows actually added."""
@@ -42,7 +48,7 @@ def insert_new_candidates(rows: list[dict]) -> int:
         return 0
     added = _post(
         "deal_candidates?on_conflict=source_key&select=id",
-        rows,
+        _uniform(rows),
         prefer="resolution=ignore-duplicates,return=representation",
     )
     return len(added or [])

@@ -38,6 +38,9 @@ export interface DealCandidate {
   is_food: boolean;
   suggested_category: DealCategory | null;
   suggested_merchant: string | null;
+  suggested_url: string | null;
+  suggested_starts_at: string | null;
+  suggested_expires_at: string | null;
   status: "pending" | "approved" | "rejected";
   created_at: string;
 }

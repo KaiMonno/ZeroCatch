@@ -49,6 +49,9 @@ export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
                 title: candidate.title,
                 merchant: candidate.suggested_merchant ?? "",
                 category: candidate.suggested_category ?? "pure_freebie",
+                url: candidate.suggested_url ?? undefined,
+                starts_at: candidate.suggested_starts_at,
+                expires_at: candidate.suggested_expires_at,
               }}
             />
           </div>

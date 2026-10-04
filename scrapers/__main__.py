@@ -3,16 +3,18 @@
     python -m scrapers            # fetch, write to Supabase, clean up
     python -m scrapers --dry-run  # fetch and print, no database needed
 
-Lead sources (blogs, Steam, GOG) go to the review queue. Epic is first-party
-data and is published directly.
+Lead sources (blogs and press releases, Steam, GOG, the food calendar) go to
+the review queue. Epic is first-party data and is published directly.
 """
 
 import argparse
 import sys
+from collections import Counter
 from collections.abc import Callable
 
 from . import supabase_rest
-from .blogs import fetch_blog_leads
+from .blogs import fetch_blog_leads, format_stats
+from .calendar import fetch_calendar_leads
 from .epic import fetch_epic_deals
 from .gog import fetch_gog_leads
 from .steam import fetch_steam_leads
@@ -33,12 +35,15 @@ def main() -> int:
     args = parser.parse_args()
 
     errors: list[str] = []
+    blog_stats: Counter = Counter()
     print("Collecting:")
     leads = [
-        *_run("blogs", lambda: fetch_blog_leads(args.max_age_days), errors),
+        *_run("blogs", lambda: fetch_blog_leads(args.max_age_days, blog_stats), errors),
+        *_run("calendar", fetch_calendar_leads, errors),
         *_run("steam", fetch_steam_leads, errors),
         *_run("gog", fetch_gog_leads, errors),
     ]
+    print(format_stats(blog_stats))
     deals = _run("epic", fetch_epic_deals, errors)
 
     if args.dry_run:
@@ -49,6 +54,8 @@ def main() -> int:
         for row in leads:
             food = "🍔" if row["is_food"] else "  "
             print(f"  {food} [{row['suggested_category']}] {row['title']}  ({row['suggested_merchant'] or '-'})")
+            if row.get("suggested_url"):
+                print(f"       → {row['suggested_url']}  {row.get('suggested_starts_at') or ''} {row.get('suggested_expires_at') or ''}")
         print(f"\n{len(deals)} deals, {len(leads)} leads ({sum(r['is_food'] for r in leads)} food)")
     else:
         try:

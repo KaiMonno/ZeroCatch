@@ -17,6 +17,7 @@ export interface DealFormDefaults {
   requires_credit_card?: boolean;
   instant_cancel_safe?: boolean;
   trial_duration_days?: number | null;
+  starts_at?: string | null;
   expires_at?: string | null;
   is_hero_featured?: boolean;
 }
@@ -26,6 +27,33 @@ function toLocalInput(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * datetime-local has no timezone. A hidden field carries the real instant, and
+ * the visible input is filled client-side (ref callback) so server and browser
+ * timezones can't cause a hydration mismatch.
+ */
+function LocalDateTimeField({ name, label, id, initialIso }: { name: string; label: string; id: string; initialIso?: string | null }) {
+  const [iso, setIso] = useState(initialIso ?? "");
+  return (
+    <div className="flex flex-col gap-1">
+      <input type="hidden" name={name} value={iso} />
+      <label htmlFor={id} className="text-xs text-muted">{label}</label>
+      <input
+        id={id}
+        type="datetime-local"
+        ref={(el) => {
+          if (el && !el.dataset.ready) {
+            el.dataset.ready = "1";
+            if (initialIso) el.value = toLocalInput(initialIso);
+          }
+        }}
+        onChange={(e) => setIso(e.target.value ? new Date(e.target.value).toISOString() : "")}
+        className={field}
+      />
+    </div>
+  );
 }
 
 export function DealForm({
@@ -43,10 +71,6 @@ export function DealForm({
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(serverAction, {});
   const [category, setCategory] = useState<DealCategory>(defaults.category ?? "pure_freebie");
-  // datetime-local has no timezone. The hidden field carries the real instant;
-  // the visible input is filled client-side (ref callback) so server and
-  // browser timezones can't cause a hydration mismatch.
-  const [expiresIso, setExpiresIso] = useState(defaults.expires_at ?? "");
   const id = (name: string) => `${idPrefix}-${name}`;
 
   return (
@@ -54,7 +78,6 @@ export function DealForm({
       {Object.entries(hidden).map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} />
       ))}
-      <input type="hidden" name="expires_at" value={expiresIso} />
 
       <div className="flex flex-col gap-1 sm:col-span-2">
         <label htmlFor={id("title")} className="text-xs text-muted">Title</label>
@@ -101,21 +124,8 @@ export function DealForm({
         <textarea id={id("description")} name="description" rows={2} defaultValue={defaults.description} className={field} />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor={id("expires")} className="text-xs text-muted">Expires (your local time, blank = no end)</label>
-        <input
-          id={id("expires")}
-          type="datetime-local"
-          ref={(el) => {
-            if (el && !el.dataset.ready) {
-              el.dataset.ready = "1";
-              if (defaults.expires_at) el.value = toLocalInput(defaults.expires_at);
-            }
-          }}
-          onChange={(e) => setExpiresIso(e.target.value ? new Date(e.target.value).toISOString() : "")}
-          className={field}
-        />
-      </div>
+      <LocalDateTimeField name="starts_at" id={id("starts")} label="Starts (your local time, blank = now)" initialIso={defaults.starts_at} />
+      <LocalDateTimeField name="expires_at" id={id("expires")} label="Expires (your local time, blank = no end)" initialIso={defaults.expires_at} />
 
       {category === "free_trial" && (
         <div className="flex flex-col gap-1">
