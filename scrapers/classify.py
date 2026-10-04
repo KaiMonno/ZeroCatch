@@ -10,9 +10,10 @@ from dataclasses import dataclass
 # Sponsored or affiliate roundups are exactly the junk ZeroCatch filters out.
 BLOCKED_CATEGORIES = {"Sponsored Posts"}
 
-# "free" as a standalone word: not "Wrinkle-Free", "Free Shipping", or the brand "Free People".
+# "free" as a standalone word: not "Wrinkle-Free", the brand "Free People", or
+# fulfillment perks like "Free Shipping" / "Free Same-Day Delivery".
 _FREE_RE = re.compile(
-    r"(?<![-\w])(free(?![-\w]| shipping| delivery| people)|freebies?|bogo|b1g1|"
+    r"(?<![-\w])(free(?![-\w]| people| (?:[\w-]+ ){0,2}(?:shipping|delivery|returns|pickup)\b)|freebies?|bogo|b1g1|"
     r"buy one,? get one|on the house|complimentary)(?![-\w])",
     re.I,
 )

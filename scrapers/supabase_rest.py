@@ -1,4 +1,4 @@
-"""Minimal Supabase (PostgREST) client: just the one call the scrapers need."""
+"""Minimal Supabase (PostgREST) client: just the calls the scrapers need."""
 
 import json
 import os
@@ -19,22 +19,47 @@ def _headers(key: str) -> dict[str, str]:
     return headers
 
 
+def _post(path: str, body: object, prefer: str | None = None) -> object:
+    url = os.environ["SUPABASE_URL"].rstrip("/")
+    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
+    headers = _headers(key)
+    if prefer:
+        headers["Prefer"] = prefer
+    request = urllib.request.Request(
+        f"{url}/rest/v1/{path}", data=json.dumps(body).encode(), method="POST", headers=headers
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            return json.loads(response.read() or b"null")
+    except urllib.error.HTTPError as err:
+        raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
+
+
 def insert_new_candidates(rows: list[dict]) -> int:
     """Insert leads, skipping any source_key already queued (so re-runs never
     reset a reviewed candidate back to pending). Returns rows actually added."""
     if not rows:
         return 0
-    url = os.environ["SUPABASE_URL"].rstrip("/")
-    key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-
-    request = urllib.request.Request(
-        f"{url}/rest/v1/deal_candidates?on_conflict=source_key&select=id",
-        data=json.dumps(rows).encode(),
-        method="POST",
-        headers={**_headers(key), "Prefer": "resolution=ignore-duplicates,return=representation"},
+    added = _post(
+        "deal_candidates?on_conflict=source_key&select=id",
+        rows,
+        prefer="resolution=ignore-duplicates,return=representation",
     )
-    try:
-        with urllib.request.urlopen(request, timeout=30) as response:
-            return len(json.loads(response.read() or b"[]"))
-    except urllib.error.HTTPError as err:
-        raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
+    return len(added or [])
+
+
+def upsert_deals(rows: list[dict]) -> int:
+    """Publish first-party deals, updating any already present (e.g. Epic
+    extending an end date). Returns rows written."""
+    if not rows:
+        return 0
+    written = _post(
+        "deals?on_conflict=source_key&select=id",
+        rows,
+        prefer="resolution=merge-duplicates,return=representation",
+    )
+    return len(written or [])
+
+
+def run_housekeeping() -> dict:
+    return _post("rpc/run_housekeeping", {}) or {}

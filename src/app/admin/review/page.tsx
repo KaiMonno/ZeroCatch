@@ -3,9 +3,15 @@ import { Suspense } from "react";
 import { requireAdmin } from "@/lib/admin-session";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import type { DealCandidate } from "@/lib/types";
-import { logout } from "../actions";
+import { AdminNav } from "../admin-nav";
 import { CandidateCard } from "./candidate-card";
 import { ManualLeadForm } from "./manual-lead-form";
+
+const VIEWS = [
+  { key: "food", label: "Food", food: true },
+  { key: "other", label: "Games & other", food: false },
+  { key: "all", label: "All", food: null },
+] as const;
 
 export default function ReviewPage({ searchParams }: PageProps<"/admin/review">) {
   return (
@@ -17,7 +23,8 @@ export default function ReviewPage({ searchParams }: PageProps<"/admin/review">)
 
 async function ReviewQueue({ searchParams }: Pick<PageProps<"/admin/review">, "searchParams">) {
   await requireAdmin();
-  const showAll = (await searchParams).show === "all";
+  const { show } = await searchParams;
+  const view = VIEWS.find((v) => v.key === show) ?? VIEWS[0];
 
   const supabase = getSupabaseAdmin();
   if (!supabase) {
@@ -28,50 +35,52 @@ async function ReviewQueue({ searchParams }: Pick<PageProps<"/admin/review">, "s
     .from("deal_candidates")
     .select("*")
     .eq("status", "pending")
-    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("published_at", { ascending: false, nullsFirst: true })
     .limit(100);
-  if (!showAll) query = query.eq("is_food", true);
-  const { data, error } = await query;
+  if (view.food !== null) query = query.eq("is_food", view.food);
+
+  const pendingCount = (food: boolean) =>
+    supabase
+      .from("deal_candidates")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .eq("is_food", food);
+
+  const [{ data, error }, foodCount, otherCount] = await Promise.all([query, pendingCount(true), pendingCount(false)]);
   if (error) throw new Error(error.message);
   const candidates = data as DealCandidate[];
+  const counts = { food: foodCount.count ?? 0, other: otherCount.count ?? 0 };
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <AdminNav active="review" />
+      <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-fg">Review queue</h1>
-          <p className="text-sm text-muted">
-            {candidates.length} pending {showAll ? "leads" : "food leads"}. Verify the terms yourself, then link the
-            brand&apos;s own page.
-          </p>
+          <p className="text-sm text-muted">Verify the terms yourself, then link the brand&apos;s own page.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <nav aria-label="Queue filter" className="flex rounded-xl border border-line bg-surface p-1 text-sm">
-            {[
-              { href: "/admin/review", label: "Food", active: !showAll },
-              { href: "/admin/review?show=all", label: "All", active: showAll },
-            ].map((tab) => (
+        <nav aria-label="Queue filter" className="flex rounded-xl border border-line bg-surface p-1 text-sm">
+          {VIEWS.map((v) => {
+            const count = v.key === "all" ? counts.food + counts.other : counts[v.key];
+            return (
               <Link
-                key={tab.label}
-                href={tab.href}
-                aria-current={tab.active ? "page" : undefined}
-                className={`rounded-lg px-3 py-1 ${tab.active ? "bg-fg text-bg" : "text-muted hover:text-fg"}`}
+                key={v.key}
+                href={v.key === "food" ? "/admin/review" : `/admin/review?show=${v.key}`}
+                aria-current={v.key === view.key ? "page" : undefined}
+                className={`rounded-lg px-3 py-1 ${v.key === view.key ? "bg-fg text-bg" : "text-muted hover:text-fg"}`}
               >
-                {tab.label}
+                {v.label} <span className="tabular-nums opacity-70">{count}</span>
               </Link>
-            ))}
-          </nav>
-          <form action={logout}>
-            <button className="rounded-lg px-3 py-1.5 text-sm text-muted hover:bg-white/5 hover:text-fg">Sign out</button>
-          </form>
-        </div>
+            );
+          })}
+        </nav>
       </div>
 
       <ManualLeadForm />
 
       {candidates.length === 0 ? (
         <p className="rounded-2xl border border-dashed border-line px-6 py-12 text-center text-sm text-muted">
-          Queue is empty. The scraper runs nightly at 12:05am Pacific.
+          Nothing to review here. Scrapers run nightly at 12:05am Pacific.
         </p>
       ) : (
         <ul className="flex flex-col gap-3">

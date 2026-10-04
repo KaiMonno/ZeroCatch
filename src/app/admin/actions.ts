@@ -2,25 +2,19 @@
 
 import { randomUUID } from "node:crypto";
 import { refresh, updateTag } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { endSession, passwordMatches, requireAdmin, startSession } from "@/lib/admin-session";
+import { friendlyDbError, parseDealForm } from "@/lib/deal-form";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import type { DealCategory } from "@/lib/types";
 
 export interface ActionState {
   error?: string;
   ok?: boolean;
 }
 
-const CATEGORIES: DealCategory[] = ["pure_freebie", "free_trial", "free_with_purchase"];
-
-// Postgres constraint name → reviewer-friendly message.
-const CONSTRAINT_MESSAGES: Record<string, string> = {
-  pure_freebie_no_card: "Pure Freebies can't require a credit card. Uncheck it or change the category.",
-  trial_has_duration: "Free trials need a duration in days.",
-  expires_after_start: "The expiry date must be in the future.",
-  deals_url_check: "The deal link must start with https://",
-};
+const MAX_FAILURES = 5;
+const LOCKOUT_MS = 15 * 60_000;
 
 function admin() {
   const supabase = getSupabaseAdmin();
@@ -30,11 +24,38 @@ function admin() {
 
 const text = (form: FormData, key: string) => String(form.get(key) ?? "").trim();
 
+/** Publish changes to the public feed now instead of waiting out the cache. */
+function publish() {
+  updateTag("deals");
+  refresh();
+}
+
 // ── Auth ────────────────────────────────────────────────────────────────
 
+async function clientIp(): Promise<string> {
+  // Vercel overwrites x-forwarded-for with the real client IP, so it can't be spoofed there.
+  return (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
 export async function login(_prev: ActionState, form: FormData): Promise<ActionState> {
+  const ip = await clientIp();
+  const supabase = getSupabaseAdmin();
+
+  // Fail open if the limiter table is unreachable: the password still guards the door.
+  if (supabase) {
+    const { count, error } = await supabase
+      .from("admin_login_failures")
+      .select("id", { count: "exact", head: true })
+      .eq("ip", ip)
+      .gte("attempted_at", new Date(Date.now() - LOCKOUT_MS).toISOString());
+    if (error) console.error("login limiter unavailable:", error.message);
+    else if ((count ?? 0) >= MAX_FAILURES)
+      return { error: "Too many failed attempts. Try again in 15 minutes." };
+  }
+
   if (!passwordMatches(text(form, "password"))) {
-    // Slow down guessing. Real rate limiting arrives with Phase 3 auth.
+    const { error } = (await supabase?.from("admin_login_failures").insert({ ip })) ?? {};
+    if (error) console.error("login limiter write failed:", error.message);
     await new Promise((resolve) => setTimeout(resolve, 750));
     return { error: "Wrong password." };
   }
@@ -51,46 +72,15 @@ export async function logout(): Promise<void> {
 
 export async function approveCandidate(_prev: ActionState, form: FormData): Promise<ActionState> {
   await requireAdmin();
-
-  const category = text(form, "category") as DealCategory;
-  const url = text(form, "url");
-  const trialDays = Number(text(form, "trial_duration_days"));
-  const expiresAt = text(form, "expires_at");
-
-  if (!text(form, "title")) return { error: "Title is required." };
-  if (!text(form, "merchant")) return { error: "Merchant is required." };
-  if (!CATEGORIES.includes(category)) return { error: "Pick a category." };
-  if (!URL.canParse(url) || !url.startsWith("https://"))
-    return { error: "Link to the brand's own page, starting with https://" };
-  if (category === "free_trial" && !(Number.isInteger(trialDays) && trialDays > 0))
-    return { error: "Free trials need a whole number of days." };
-  if (expiresAt && Number.isNaN(Date.parse(expiresAt))) return { error: "Invalid expiry date." };
-
-  const deal = {
-    title: text(form, "title").slice(0, 200),
-    description: text(form, "description"),
-    category,
-    merchant: text(form, "merchant"),
-    url,
-    requires_account: form.has("requires_account"),
-    requires_credit_card: form.has("requires_credit_card"),
-    instant_cancel_safe: form.has("instant_cancel_safe"),
-    trial_duration_days: category === "free_trial" ? trialDays : null,
-    expires_at: expiresAt || null,
-    is_hero_featured: form.has("is_hero_featured"),
-  };
+  const parsed = parseDealForm(form);
+  if ("error" in parsed) return parsed;
 
   const { error } = await admin().rpc("approve_candidate", {
     p_candidate_id: text(form, "candidate_id"),
-    p_deal: deal,
+    p_deal: parsed.deal,
   });
-  if (error) {
-    const known = Object.entries(CONSTRAINT_MESSAGES).find(([name]) => error.message.includes(name));
-    return { error: known?.[1] ?? error.message };
-  }
-
-  updateTag("deals"); // publish immediately instead of waiting out the cache
-  refresh();
+  if (error) return { error: friendlyDbError(error.message) };
+  publish();
   return { ok: true };
 }
 
@@ -124,4 +114,24 @@ export async function addManualLead(_prev: ActionState, form: FormData): Promise
   if (error) return { error: error.message };
   refresh();
   return { ok: true };
+}
+
+// ── Published deals ─────────────────────────────────────────────────────
+
+export async function updateDeal(_prev: ActionState, form: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = parseDealForm(form);
+  if ("error" in parsed) return parsed;
+
+  const { error } = await admin().from("deals").update(parsed.deal).eq("id", text(form, "deal_id"));
+  if (error) return { error: friendlyDbError(error.message) };
+  publish();
+  return { ok: true };
+}
+
+export async function deleteDeal(form: FormData): Promise<void> {
+  await requireAdmin();
+  const { error } = await admin().from("deals").delete().eq("id", text(form, "deal_id"));
+  if (error) throw new Error(error.message);
+  publish();
 }

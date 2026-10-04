@@ -18,6 +18,8 @@ class KeepTest(unittest.TestCase):
         self.assertFalse(c("Up to 65% Off Crocs + FREE Shipping").keep)
         self.assertFalse(c("Men's Wrinkle-Free Golf Pants Just $14.99").keep)
         self.assertFalse(c("75% Off Free People Sale").keep)
+        self.assertFalse(c("Up to 40% Off Hair Care + Free Same-Day Delivery").keep)
+        self.assertFalse(c("$5 Off Pizza + Free Curbside Pickup").keep)
 
     def test_drops_sponsored_posts(self):
         self.assertFalse(c("FREE Sample Box", categories=["Sponsored Posts"]).keep)

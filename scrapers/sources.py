@@ -1,4 +1,4 @@
-"""Feeds the pipeline reads. Every entry must permit automated access in its
+"""RSS feeds the blog scraper reads. Every entry must permit automated access in its
 robots.txt (checked at runtime in fetch.py). Blogs and forums are lead sources
 only: a human verifies each lead and links the brand's own page, never the blog.
 
@@ -19,7 +19,7 @@ class Source:
     trusted_categories: frozenset[str] = frozenset()
 
 
-SOURCES: list[Source] = [
+RSS_SOURCES: list[Source] = [
     Source(
         name="hip2save",
         url="https://hip2save.com/category/freebies/feed/",

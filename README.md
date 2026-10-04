@@ -45,14 +45,25 @@ Row-level security allows `SELECT` for the anon role only. Writes go through the
 ## Lead pipeline and review queue
 
 ```
-GitHub Actions (nightly) ─▶ scrapers/ ─▶ deal_candidates ─▶ /admin/review ─▶ deals ─▶ site
-                            RSS + robots.txt   (RLS: no public    human verifies    approve_candidate()
-                            check + keyword    access at all)     terms, links the  publishes atomically,
-                            classifier                            brand's own page  cache invalidated
+GitHub Actions (nightly) ─▶ scrapers/ ─┬─▶ deal_candidates ─▶ /admin/review ─▶ deals ─▶ site
+                                        │   (blogs, Steam, GOG;   human verifies     ▲
+                                        │    no public access)    terms + links      │
+                                        └─▶ Epic (first-party) ──────────────────────┘ published directly
 ```
 
-- **Scrapers** (`python -m scrapers`, stdlib only, no `pip install`): read each feed in `scrapers/sources.py`, honor its robots.txt, keep posts that look free, drop sponsored posts and discount-only posts, flag food, and guess a merchant and category. Re-runs skip anything already queued, so a rejected lead never returns. Use `--dry-run` to preview without a database.
-- **Review queue** (`/admin/review`, password-protected): a person checks the real terms and publishes or rejects each lead. Blogs are only a source of leads. Every published deal links to the brand's own page.
+| Source | How | Why |
+| --- | --- | --- |
+| Hip2Save RSS | lead → review | Blog posts can't confirm card/terms details |
+| Steam free-to-keep | lead → review | Often DLC that needs a paid base game; no end date in API |
+| GOG giveaway | lead → review | End time is only rendered client-side |
+| Epic Games | **auto-published** as hero | First-party feed with exact start/end times. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule with no extra cron run |
+
+
+- **Scrapers** (`python -m scrapers`, stdlib only, no `pip install`): honor robots.txt, keep posts that look free, drop sponsored posts, discount-only posts and "free shipping" sales, flag food, and guess a merchant and category. Re-runs skip anything already queued, so a rejected lead never returns. Use `--dry-run` to preview without a database.
+- **Review queue** (`/admin/review`): a person checks the real terms and publishes or rejects each lead. Blogs are only a source of leads. Every published deal links to the brand's own page.
+- **Published deals** (`/admin/deals`): edit or unpublish anything live, scheduled or recently expired.
+- **Housekeeping** (`run_housekeeping()`, nightly after scraping): auto-rejects leads left pending for 14 days, deletes deals expired more than 90 days ago, and prunes login-failure records.
+- **Admin auth:** a single password, an HMAC-signed cookie, and lockout after 5 failed attempts per IP in 15 minutes.
 - **Tests:** `python -m unittest discover -s scrapers/tests -t .`
 - **Ruled-out sources** and why are documented in `scrapers/sources.py`.
 
@@ -63,8 +74,8 @@ src/app/            page (tabs via searchParams), layout, manifest, icons, loadi
 src/components/     DealCard, HeroCard, TabNav, SearchBar, FilterChips, BadgeLegend
 src/lib/deals.ts    the only data-access module (Supabase query + local fallback)
 src/lib/tabs.ts     tab and filter config, URL builder
-src/app/admin/      review queue: login, server actions, approve/reject forms
-supabase/           SQL migrations (deals, then deal_candidates + approve_candidate)
+src/app/admin/      review queue + published deals: login, server actions, shared deal form
+supabase/           SQL migrations (run in filename order)
 scrapers/           Python lead scrapers + unit tests
 scripts/seed.ts     service-role upsert of sample data
 .github/workflows/  nightly scrape job
@@ -75,7 +86,7 @@ scripts/seed.ts     service-role upsert of sample data
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Web MVP: three tabs, badges, search and filters, PWA | Done (sample data) |
-| 1.5 | Data pipeline: scrapers, review queue, nightly cron | In progress: Hip2Save live; Epic, Steam, GOG next |
+| 1.5 | Data pipeline: scrapers, review queue, nightly cron | Done for Hip2Save, Epic, Steam, GOG. Social sources need a Meta developer account |
 | 2 | Expo mobile app on the same Supabase backend | Planned |
 | 3 | Accounts and "Mark as claimed" | Planned |
 
@@ -86,9 +97,8 @@ GitHub Actions cron runs in UTC.
 | Job | Cron (UTC) | Local time | Why |
 | --- | --- | --- | --- |
 | Daily refresh | `5 8 * * *` | 12:05am PST / 1:05am PDT | Picks up new deals overnight for every US time zone. Midnight Eastern would publish next-day deals at 9pm Pacific. |
-| Epic weekly drop (planned) | `15 16 * * 4` | Thu after 11am ET | Epic rotates Thursdays at 11am ET. Without this run the hero card would be empty until midnight. |
 
-Deals disappear on time no matter how often scrapers run, because `active_deals` filters on `expires_at` at query time. The schedule only controls how quickly new deals appear.
+Deals appear and disappear on time no matter how often scrapers run, because `active_deals` filters on `starts_at` and `expires_at` at query time. That's why Epic needs no Thursday run: next week's games are already stored with their start time. The schedule only controls how quickly brand-new deals are discovered.
 
 ### Phase 3: accounts and "Mark as claimed"
 

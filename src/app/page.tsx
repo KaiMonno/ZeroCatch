@@ -51,9 +51,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         <FilterChips tab={tab.slug} q={q} active={filters} />
       </div>
 
-      {heroes.map((deal) => (
-        <HeroCard key={deal.id} deal={deal} />
-      ))}
+      {heroes.length > 0 && (
+        // Epic often gives away two games at once: pair them on wider screens.
+        <div className={`grid gap-3 ${heroes.length > 1 ? "lg:grid-cols-2" : ""}`}>
+          {heroes.map((deal) => (
+            <HeroCard key={deal.id} deal={deal} />
+          ))}
+        </div>
+      )}
 
       {rest.length > 0 ? (
         <section aria-label={`${tab.label} list`}>

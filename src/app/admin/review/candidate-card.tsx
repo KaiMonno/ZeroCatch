@@ -1,7 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import type { DealCandidate } from "@/lib/types";
-import { rejectCandidate } from "../actions";
-import { ApproveForm } from "./approve-form";
+import { approveCandidate, rejectCandidate } from "../actions";
+import { DealForm } from "../deal-form";
 
 function timeAgo(iso: string | null): string {
   if (!iso) return "unknown date";
@@ -40,7 +40,17 @@ export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
             Verify &amp; publish…
           </summary>
           <div className="border-t border-line p-3">
-            <ApproveForm candidate={candidate} />
+            <DealForm
+              action={approveCandidate}
+              hidden={{ candidate_id: candidate.id }}
+              idPrefix={candidate.id}
+              submitLabel="Publish deal"
+              defaults={{
+                title: candidate.title,
+                merchant: candidate.suggested_merchant ?? "",
+                category: candidate.suggested_category ?? "pure_freebie",
+              }}
+            />
           </div>
         </details>
 
