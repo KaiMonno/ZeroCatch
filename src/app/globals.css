@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* Dark-first palette. Exposed as Tailwind colors: bg-bg, bg-surface, text-fg, text-muted, border-line… */
+@theme {
+  --color-bg: #0b0d10;
+  --color-surface: #13161b;
+  --color-line: #242830;
+  --color-line-strong: #383e49;
+  --color-fg: #eceef1;
+  --color-muted: #9aa3ae;
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
