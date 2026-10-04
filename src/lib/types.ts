@@ -24,3 +24,20 @@ export type DealInsert = Omit<Deal, "id" | "created_at"> & {
   id?: string;
   created_at?: string;
 };
+
+/** Mirrors a row in `public.deal_candidates` (the review queue). */
+export interface DealCandidate {
+  id: string;
+  source: string;
+  source_key: string;
+  title: string;
+  summary: string;
+  source_url: string;
+  source_categories: string[];
+  published_at: string | null;
+  is_food: boolean;
+  suggested_category: DealCategory | null;
+  suggested_merchant: string | null;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+}

@@ -12,7 +12,7 @@ Search (`q`) and filter chips (`f=no-card,no-account,ending-soon`) live in the U
 
 ## Stack
 
-Next.js 16 (App Router, TypeScript, Tailwind v4) on Vercel · Supabase Postgres · Python scrapers on GitHub Actions cron (planned) · installable PWA.
+Next.js 16 (App Router, TypeScript, Tailwind v4) on Vercel · Supabase Postgres · Python scrapers on GitHub Actions cron · installable PWA.
 
 ## Getting started
 
@@ -24,8 +24,8 @@ npm run dev            # works immediately on local sample data
 To use a real database:
 
 1. Create a free Supabase project.
-2. Run `supabase/migrations/20261003000000_create_deals.sql` (SQL editor or `supabase db push`).
-3. `cp .env.example .env.local` and fill in the URL, anon key, and service-role key.
+2. Run each file in `supabase/migrations/` in filename order (SQL editor or `supabase db push`).
+3. `cp .env.example .env.local` and fill in the URL, anon (publishable) key, service-role (secret) key, and an admin password.
 4. `npm run seed` upserts the 10 sample deals. It's idempotent because rows are keyed on `source_key`.
 
 Sample deals in `src/data/seed-deals.ts` are illustrative. Verify each one's real terms before publishing it.
@@ -42,6 +42,20 @@ Sample deals in `src/data/seed-deals.ts` are illustrative. Verify each one's rea
 
 Row-level security allows `SELECT` for the anon role only. Writes go through the service-role key, used by the seed script and the scrapers.
 
+## Lead pipeline and review queue
+
+```
+GitHub Actions (nightly) ─▶ scrapers/ ─▶ deal_candidates ─▶ /admin/review ─▶ deals ─▶ site
+                            RSS + robots.txt   (RLS: no public    human verifies    approve_candidate()
+                            check + keyword    access at all)     terms, links the  publishes atomically,
+                            classifier                            brand's own page  cache invalidated
+```
+
+- **Scrapers** (`python -m scrapers`, stdlib only, no `pip install`): read each feed in `scrapers/sources.py`, honor its robots.txt, keep posts that look free, drop sponsored posts and discount-only posts, flag food, and guess a merchant and category. Re-runs skip anything already queued, so a rejected lead never returns. Use `--dry-run` to preview without a database.
+- **Review queue** (`/admin/review`, password-protected): a person checks the real terms and publishes or rejects each lead. Blogs are only a source of leads. Every published deal links to the brand's own page.
+- **Tests:** `python -m unittest discover -s scrapers/tests -t .`
+- **Ruled-out sources** and why are documented in `scrapers/sources.py`.
+
 ## Project layout
 
 ```
@@ -49,8 +63,11 @@ src/app/            page (tabs via searchParams), layout, manifest, icons, loadi
 src/components/     DealCard, HeroCard, TabNav, SearchBar, FilterChips, BadgeLegend
 src/lib/deals.ts    the only data-access module (Supabase query + local fallback)
 src/lib/tabs.ts     tab and filter config, URL builder
-supabase/           SQL migrations
+src/app/admin/      review queue: login, server actions, approve/reject forms
+supabase/           SQL migrations (deals, then deal_candidates + approve_candidate)
+scrapers/           Python lead scrapers + unit tests
 scripts/seed.ts     service-role upsert of sample data
+.github/workflows/  nightly scrape job
 ```
 
 ## Roadmap
@@ -58,18 +75,18 @@ scripts/seed.ts     service-role upsert of sample data
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Web MVP: three tabs, badges, search and filters, PWA | Done (sample data) |
-| 1.5 | Data pipeline: Python scrapers on GitHub Actions cron, plus a curated deals file | Next |
+| 1.5 | Data pipeline: scrapers, review queue, nightly cron | In progress: Hip2Save live; Epic, Steam, GOG next |
 | 2 | Expo mobile app on the same Supabase backend | Planned |
 | 3 | Accounts and "Mark as claimed" | Planned |
 
-### Refresh schedule (planned)
+### Refresh schedule
 
 GitHub Actions cron runs in UTC.
 
 | Job | Cron (UTC) | Local time | Why |
 | --- | --- | --- | --- |
 | Daily refresh | `5 8 * * *` | 12:05am PST / 1:05am PDT | Picks up new deals overnight for every US time zone. Midnight Eastern would publish next-day deals at 9pm Pacific. |
-| Epic weekly drop | `15 16 * * 4` | Thu after 11am ET | Epic rotates Thursdays at 11am ET. Without this run the hero card would be empty until midnight. |
+| Epic weekly drop (planned) | `15 16 * * 4` | Thu after 11am ET | Epic rotates Thursdays at 11am ET. Without this run the hero card would be empty until midnight. |
 
 Deals disappear on time no matter how often scrapers run, because `active_deals` filters on `expires_at` at query time. The schedule only controls how quickly new deals appear.
 

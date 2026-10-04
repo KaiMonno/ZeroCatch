@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Synthetic feed modeled on a WordPress RSS 2.0 export. -->
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Example Deals Blog</title>
+    <item>
+      <title>FREE Medium Coffee at Dunkin&#8217; for Rewards Members &#124; Today Only</title>
+      <link>https://deals.example.com/free-dunkin-coffee/</link>
+      <pubDate>Sat, 03 Oct 2026 14:00:00 +0000</pubDate>
+      <category><![CDATA[Legit Freebies & Samples]]></category>
+      <guid isPermaLink="false">https://deals.example.com/?p=1001</guid>
+      <description><![CDATA[<p>Open the app and redeem.</p> <p>No purchase   needed.</p>]]></description>
+    </item>
+    <item>
+      <title>Up to 60% Off Sneakers + FREE Shipping</title>
+      <link>https://deals.example.com/sneaker-sale/</link>
+      <pubDate>Sat, 03 Oct 2026 12:00:00 +0000</pubDate>
+      <category><![CDATA[Sponsored Posts]]></category>
+      <guid isPermaLink="false">https://deals.example.com/?p=1002</guid>
+      <description>Big sale.</description>
+    </item>
+    <item>
+      <title>No guid or date here</title>
+      <link>https://deals.example.com/no-guid/</link>
+      <pubDate>not a date</pubDate>
+    </item>
+  </channel>
+</rss>

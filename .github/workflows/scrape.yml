@@ -1,0 +1,35 @@
+name: Scrape leads
+
+on:
+  schedule:
+    # 08:05 UTC = 12:05am PST / 1:05am PDT. The :05 offset dodges the
+    # top-of-hour congestion that delays GitHub's scheduler.
+    - cron: "5 8 * * *"
+  workflow_dispatch: # "Run workflow" button for manual runs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scrape
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Unit tests
+        run: python -m unittest discover -s scrapers/tests -t .
+
+      - name: Queue new leads
+        run: python -m scrapers
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}

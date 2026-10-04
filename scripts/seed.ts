@@ -17,18 +17,22 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
-const deals = buildSeedDeals();
+async function main(url: string, serviceKey: string) {
+  const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
+  const deals = buildSeedDeals();
 
-const { data, error } = await supabase
-  .from("deals")
-  .upsert(deals, { onConflict: "source_key" })
-  .select("title, category");
+  const { data, error } = await supabase
+    .from("deals")
+    .upsert(deals, { onConflict: "source_key" })
+    .select("title, category");
 
-if (error) {
-  console.error("Seed failed:", error.message);
-  process.exit(1);
+  if (error) {
+    console.error("Seed failed:", error.message);
+    process.exit(1);
+  }
+
+  console.log(`Seeded ${data.length} deals:`);
+  for (const d of data) console.log(`  [${d.category}] ${d.title}`);
 }
 
-console.log(`Seeded ${data.length} deals:`);
-for (const d of data) console.log(`  [${d.category}] ${d.title}`);
+main(url, serviceKey);
