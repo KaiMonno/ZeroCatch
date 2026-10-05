@@ -5,7 +5,7 @@
     python -m scrapers --dry-run --judge # also call the AI judge on fresh leads (costs money)
 
 Published directly (the source or file is the approval): Epic, Steam
-free-to-keep games (no DLC), the GOG giveaway, curated trials
+free-to-keep games (no DLC), the GOG giveaway, itch.io 100%-off games, curated trials
 (data/trials.toml), fixed-date calendar freebies.
 AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them;
 =off queues them): press-release and Instagram brand-post leads.
@@ -22,7 +22,7 @@ from . import judge, supabase_rest
 from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
 from .epic import fetch_epic_deals
-from . import gog, instagram, steam, trials
+from . import gog, instagram, itch, steam, trials
 
 
 def _run(name: str, collector: Callable[[], object], errors: list[str], default: object) -> object:
@@ -88,6 +88,7 @@ def main() -> int:
     synced = {
         "steam": (steam.KEY_PREFIX, _run("steam", steam.fetch_steam_deals, errors, None)),
         "gog": (gog.KEY_PREFIX, _run("gog", gog.fetch_gog_deals, errors, None)),
+        "itch": (itch.KEY_PREFIX, _run("itch", itch.fetch_itch_deals, errors, None)),
         "trials": (trials.KEY_PREFIX, _run("trials", trials.fetch_trial_deals, errors, None)),
     }
     mode = judge.judge_mode()
@@ -97,7 +98,8 @@ def main() -> int:
         groups += [(name, deals or []) for name, (_, deals) in synced.items()]
         for title, group in groups:
             for d in group:
-                window = f"{d['starts_at'][:10]} → {d['expires_at'][:10]}" if d.get("expires_at") else "no end date"
+                start = (d.get("starts_at") or "now")[:10]
+                window = f"{start} → {d['expires_at'][:10]}" if d.get("expires_at") else "no end date"
                 print(f"  ★ [{title}] {d['title']}  {window}")
         if args.judge and mode != "off":
             _, tally = apply_judge(leads, "shadow", errors)

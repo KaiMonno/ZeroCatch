@@ -55,3 +55,15 @@ class UpcomingLeadsTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ExtendedRulesTest(unittest.TestCase):
+    def test_approximate_weekday_rule(self):
+        self.assertEqual(resolve_date("~third monday of february", 2027), (date(2027, 2, 15), True))
+
+    def test_multi_day_event_spans_all_days(self):
+        event = {**EVENT, "date": "~07-03", "days": 3, "food": False}
+        [lead] = upcoming_leads([event], date(2026, 6, 20))
+        self.assertEqual(lead["suggested_starts_at"], "2026-07-03T04:00:00+00:00")
+        self.assertEqual(lead["suggested_expires_at"], "2026-07-06T06:59:00+00:00")  # end of Jul 5, Pacific
+        self.assertFalse(lead["is_food"])

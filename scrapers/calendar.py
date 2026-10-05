@@ -28,12 +28,13 @@ _FIXED_RE = re.compile(r"^(~?)(\d{2})-(\d{2})$")
 def resolve_date(rule: str, year: int) -> tuple[date, bool]:
     """(date in `year`, is_approximate) for a calendar date rule."""
     rule = rule.strip()
+    approximate = rule.startswith("~")
     if m := _FIXED_RE.match(rule):
         return date(year, int(m.group(2)), int(m.group(3))), bool(m.group(1))
-    if m := _NTH_RE.match(rule):
+    if m := _NTH_RE.match(rule.lstrip("~").strip()):
         ordinal, weekday, month = _ORDINALS[m.group(1).lower()], _WEEKDAYS[m.group(2).lower()], _MONTHS[m.group(3).lower()]
         days = [d for d in cal.Calendar().itermonthdates(year, month) if d.month == month and d.weekday() == weekday]
-        return days[ordinal - 1 if ordinal > 0 else -1], False
+        return days[ordinal - 1 if ordinal > 0 else -1], approximate
     raise ValueError(f"Unrecognized calendar date rule: {rule!r}")
 
 
@@ -45,7 +46,9 @@ def upcoming_leads(events: list[dict], today: date, lead_days: int = LEAD_DAYS) 
             day, approximate = resolve_date(event["date"], year)
             if not today <= day <= today + timedelta(days=lead_days):
                 continue
-            start, end = day_window(day)
+            # Multi-day events (e.g. National Parks' July 3-5) run through the last day.
+            start = day_window(day)[0]
+            end = day_window(day + timedelta(days=int(event.get("days", 1)) - 1))[1]
             check = (
                 f"DATE VARIES BY YEAR: confirm {event['merchant']} has announced it for {day:%B} {day.day}, "
                 "and fix the dates if not."
@@ -61,7 +64,7 @@ def upcoming_leads(events: list[dict], today: date, lead_days: int = LEAD_DAYS) 
                     "source_url": event["url"],
                     "source_categories": ["Recurring"],
                     "published_at": datetime.now(timezone.utc).isoformat(),
-                    "is_food": True,
+                    "is_food": bool(event.get("food", True)),
                     "suggested_category": "pure_freebie",
                     "suggested_merchant": event["merchant"],
                     "suggested_url": event["url"],

@@ -124,3 +124,109 @@ url = "https://whataburger.com/"
 date = "09-29"
 requires_account = true
 verified = "2024-09-29 and 2026-09-29: free coffee, no purchase (Slickdeals threads)"
+
+# ── Beyond food (food = false): genuinely free days for everyone ─────────────
+# National Park fee-free days: the list is set yearly (2026 changed it and
+# limited it to U.S. citizens and residents), so every entry is "~" to confirm.
+
+[[event]]
+key = "nps-presidents-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Presidents Day"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~third monday of february"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-memorial-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Memorial Day"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~last monday of may"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-flag-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Flag Day"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~06-14"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-independence-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Independence Day weekend (3 days)"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~07-03"
+days = 3
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-nps-birthday"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on the National Park Service's birthday"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~08-25"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-constitution-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Constitution Day"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~09-17"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-teddy-roosevelt-birthday"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Theodore Roosevelt's birthday"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~10-27"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "nps-veterans-day"
+merchant = "National Park Service"
+title = "Free Entrance to National Parks on Veterans Day"
+description = "Every National Park Service site that charges an entrance fee waives it for U.S. citizens and residents. Camping, timed-entry reservations and other fees may still apply."
+url = "https://www.nps.gov/planyourvisit/fee-free-parks.htm"
+date = "~11-11"
+food = false
+verified = "2026: NPS fee-free days list (Feb 16, May 25, Jun 14, Jul 3-5, Aug 25, Sep 17, Oct 27, Nov 11)"
+
+[[event]]
+key = "free-comic-book-day"
+merchant = "Free Comic Book Day"
+title = "Free Comics on Free Comic Book Day"
+description = "Participating comic shops across the U.S. give away specially printed comics, no purchase necessary. Selection varies by shop."
+url = "https://www.freecomicbookday.com/"
+date = "first saturday of may"
+food = false
+verified = "2026-05-02: first Saturday in May, annual since 2002 (WEVV, Sideshow)"
+
+[[event]]
+key = "smithsonian-museum-day"
+merchant = "Smithsonian Magazine"
+title = "Free Museum Admission on Museum Day"
+description = "Download a free ticket from Smithsonian magazine (admits two) for free entry to one participating museum, zoo or cultural center that day."
+url = "https://www.smithsonianmag.com/museumday/"
+date = "~third saturday of september"
+requires_account = true
+food = false
+verified = "2024-09-21 and 2025-09-20 (third Saturday); confirm the year's date and that tickets are open"

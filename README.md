@@ -50,7 +50,7 @@ The public rules are on the site at `/what-qualifies`. A deal is listed only if 
 ```
 GitHub Actions (nightly, 12:05am PT) ─▶ scrapers/
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
-  │    Epic · Steam (no DLC) · GOG · trials.toml · fixed-date food calendar
+  │    Epic · Steam (no DLC) · GOG · itch.io · trials.toml · fixed-date calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
   │    PR Newswire · Instagram brand posts   (AI_JUDGE_MODE: off / shadow / publish)
   └─ review queue (/admin/review): variable-date calendar entries, judged leads while the judge is off
@@ -61,9 +61,10 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | --- | --- |
 | Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule |
 | `scrapers/data/trials.toml` | The file is the approval: listed trials publish, removed ones unpublish |
-| `scrapers/data/food_calendar.toml` | Fixed-date freebies publish 21 days ahead (hidden until the day); variable-date ones go to the queue to confirm the year's date |
+| `scrapers/data/food_calendar.toml` | Recurring free days: food, plus National Park fee-free days, Free Comic Book Day and Museum Day. Fixed-date entries publish 21 days ahead (hidden until the day); "~" entries go to the queue to confirm the year's date |
 | Steam free-to-keep | Auto-published if Steam's API says it's a full game (DLC excluded); unpublished the night it leaves the free list |
 | GOG giveaway | Auto-published; unpublished the night the homepage banner is gone |
+| itch.io sale feed | 100%-off games with an original price of at least $3.99 auto-publish, using the feed's exact `saleends` date |
 | PR Newswire, Instagram brand accounts | Inclusion rules, then the AI judge (or the review queue while the judge is off) |
 | Hip2Save | Paused: ~1% of posts qualified |
 
