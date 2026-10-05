@@ -1,8 +1,9 @@
-import { ExternalLink, Star } from "lucide-react";
+import { EyeOff, Flag, ExternalLink, Star } from "lucide-react";
 import { formatExpiry } from "@/lib/format";
-import type { Deal } from "@/lib/types";
-import { deleteDeal, updateDeal } from "../actions";
+import { REPORT_REASONS, type Deal } from "@/lib/types";
+import { deleteDeal, dismissReports, unhideDeal, updateDeal } from "../actions";
 import { DealForm } from "../deal-form";
+import type { DealReport } from "./page";
 
 const CATEGORY_LABEL = {
   pure_freebie: "Freebie",
@@ -10,8 +11,14 @@ const CATEGORY_LABEL = {
   free_with_purchase: "With purchase",
 } as const;
 
-export function PublishedDealRow({ deal }: { deal: Deal }) {
-  const scraperManaged = deal.source_key?.startsWith("epic:");
+export function PublishedDealRow({ deal, reports }: { deal: Deal; reports: DealReport[] }) {
+  const managedBy = deal.source_key?.startsWith("epic:")
+    ? "the Epic scraper"
+    : deal.source_key?.startsWith("trial:")
+      ? "scrapers/data/trials.toml"
+      : deal.source_key?.startsWith("calendar:")
+        ? "scrapers/data/food_calendar.toml"
+        : null;
   return (
     <article className="rounded-2xl border border-line bg-surface p-4">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -27,9 +34,43 @@ export function PublishedDealRow({ deal }: { deal: Deal }) {
         </a>
       </h3>
 
-      {scraperManaged && (
+      {(deal.hidden_at || reports.length > 0) && (
+        <div className="mt-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 text-sm">
+          <p className="flex items-center gap-1.5 font-medium text-amber-200">
+            {deal.hidden_at ? <EyeOff aria-hidden className="size-4" /> : <Flag aria-hidden className="size-4" />}
+            {deal.hidden_at ? "Hidden from the site after reports" : "Reported by visitors"} · {reports.length}{" "}
+            report{reports.length === 1 ? "" : "s"}
+          </p>
+          <ul className="mt-1.5 flex flex-col gap-1 text-amber-100/90">
+            {reports.slice(0, 5).map((r, i) => (
+              <li key={i}>
+                {REPORT_REASONS[r.reason]}
+                {r.note && <span className="text-amber-100/70">: “{r.note}”</span>}
+              </li>
+            ))}
+          </ul>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {deal.hidden_at ? (
+              <form action={unhideDeal}>
+                <input type="hidden" name="deal_id" value={deal.id} />
+                <button className="rounded-lg border border-line px-3 py-1 text-fg hover:bg-white/5">
+                  Deal is fine: unhide
+                </button>
+              </form>
+            ) : (
+              <form action={dismissReports}>
+                <input type="hidden" name="deal_id" value={deal.id} />
+                <button className="rounded-lg border border-line px-3 py-1 text-fg hover:bg-white/5">Dismiss reports</button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {managedBy && (
         <p className="mt-1 text-xs text-amber-300">
-          Managed by the Epic scraper: edits are overwritten and deletions re-added on the next nightly run.
+          Managed by {managedBy}: edits are overwritten and deletions re-added on the next nightly run. Change the
+          source instead.
         </p>
       )}
 

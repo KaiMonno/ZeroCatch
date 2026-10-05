@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from .classify import MERCHANTS, classify
 from .dates import day_window, find_deal_day
 from .fetch import fetch
-from .links import pick_brand_link
+from .links import article_text, brand_links, pick_brand_link
 from .rss import parse_rss
 from .sources import RSS_SOURCES
 
@@ -53,9 +53,10 @@ def fetch_blog_leads(max_age_days: int, stats: Counter | None = None) -> list[di
 
             merchant_domain = MERCHANTS[c.suggested_merchant][1] if c.suggested_merchant else None
             try:
-                link = pick_brand_link(fetch(item.link).decode("utf-8", "replace"), blog_host, merchant_domain)
+                page = fetch(item.link).decode("utf-8", "replace")
+                link = pick_brand_link(page, blog_host, merchant_domain)
             except Exception:
-                link = None
+                page, link = "", None
             if not link:
                 stats["no_brand_link"] += 1
                 continue
@@ -76,6 +77,9 @@ def fetch_blog_leads(max_age_days: int, stats: Counter | None = None) -> list[di
                 "suggested_url": url,
                 "suggested_starts_at": starts_at,
                 "suggested_expires_at": expires_at,
+                # Context for the AI judge; keys starting with "_" are never stored.
+                "_article_text": article_text(page),
+                "_links": [(u, a) for _, u, a in brand_links(page, blog_host)],
             }
     return list(rows.values())
 

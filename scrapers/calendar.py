@@ -1,8 +1,10 @@
-"""Recurring food freebies (data/food_calendar.toml) → pre-filled review leads.
+"""Recurring food freebies (data/food_calendar.toml).
 
-Each entry becomes a lead `LEAD_DAYS` before its date, keyed by year so it
-recurs annually. Brands don't always repeat a promotion, so a person confirms
-each year before publishing. That's one click, since every field is pre-filled.
+The file is the approval. Fixed-date entries (7/11, Halloween…) are published
+`LEAD_DAYS` ahead with a future start, so they appear on the day. Entries whose
+date varies by year ("~03-19") become pre-filled review leads instead, because
+someone has to confirm the brand announced that year's date. Keys include
+the year, so everything recurs annually.
 """
 
 import calendar as cal
@@ -65,16 +67,39 @@ def upcoming_leads(events: list[dict], today: date, lead_days: int = LEAD_DAYS) 
                     "suggested_url": event["url"],
                     "suggested_starts_at": start.isoformat(),
                     "suggested_expires_at": end.isoformat(),
+                    "_description": event["description"],  # never stored on the lead
                 }
             )
     return leads
+
+
+def lead_to_deal(lead: dict) -> dict:
+    """A fixed-date calendar lead, published directly."""
+    return {
+        "source_key": lead["source_key"],
+        "title": lead["title"],
+        "description": lead["_description"],
+        "category": "pure_freebie",
+        "merchant": lead["suggested_merchant"],
+        "url": lead["suggested_url"],
+        "requires_account": False,
+        "requires_credit_card": False,
+        "instant_cancel_safe": False,
+        "trial_duration_days": None,
+        "starts_at": lead["suggested_starts_at"],
+        "expires_at": lead["suggested_expires_at"],
+        "is_hero_featured": False,
+    }
 
 
 def load_events(path: Path = CALENDAR_FILE) -> list[dict]:
     return tomllib.loads(path.read_text())["event"]
 
 
-def fetch_calendar_leads() -> list[dict]:
+def fetch_calendar() -> tuple[list[dict], list[dict]]:
+    """(deals to publish, leads to confirm) within the next LEAD_DAYS."""
     leads = upcoming_leads(load_events(), datetime.now(timezone.utc).date())
-    print(f"  calendar: {len(leads)} recurring freebies within {LEAD_DAYS} days")
-    return leads
+    confirm = [lead for lead in leads if "DATE VARIES BY YEAR" in lead["summary"]]
+    publish = [lead_to_deal(lead) for lead in leads if lead not in confirm]
+    print(f"  calendar: {len(publish)} to publish, {len(confirm)} to confirm (within {LEAD_DAYS} days)")
+    return publish, confirm

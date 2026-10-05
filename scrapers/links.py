@@ -36,24 +36,34 @@ def _clean(url: str) -> str:
     return urlunsplit((parts.scheme, parts.netloc, parts.path, urlencode(query), ""))
 
 
-def pick_brand_link(page: str, blog_host: str, merchant_domain: str | None) -> tuple[str, str] | None:
-    """(clean url, anchor text) of the best brand link in the article, or None."""
-    body = (m.group(0) if (m := _ARTICLE_RE.search(page)) else page)
-    candidates = []
-    for href, text in _ANCHOR_RE.findall(body):
+def _article_body(page: str) -> str:
+    return m.group(0) if (m := _ARTICLE_RE.search(page)) else page
+
+
+def brand_links(page: str, blog_host: str) -> list[tuple[str, str, str]]:
+    """(host, clean url, anchor text) for every non-affiliate, non-social https link
+    in the article, in order, de-duplicated."""
+    seen, links = set(), []
+    for href, text in _ANCHOR_RE.findall(_article_body(page)):
         parts = urlsplit(html.unescape(href))
         host = parts.netloc.lower().removeprefix("www.")
-        if not host or _host_matches(host, (blog_host,)):
+        if not host or parts.scheme != "https" or _host_matches(host, (blog_host,)):
             continue
         if _host_matches(host, AFFILIATE_HOSTS) or any(host == d.split("/")[0] for d in NON_BRAND_HOSTS):
             continue
         if any(k.lower() in _AFFILIATE_PARAMS for k, _ in parse_qsl(parts.query)):
             continue
-        if parts.scheme != "https":
+        url = _clean(href)
+        if url in seen:
             continue
-        anchor = html.unescape(re.sub(r"<[^>]+>", "", text)).strip()
-        candidates.append((host, _clean(href), anchor))
+        seen.add(url)
+        links.append((host, url, html.unescape(re.sub(r"<[^>]+>", "", text)).strip()))
+    return links
 
+
+def pick_brand_link(page: str, blog_host: str, merchant_domain: str | None) -> tuple[str, str] | None:
+    """(clean url, anchor text) of the best brand link in the article, or None."""
+    candidates = brand_links(page, blog_host)
     if not candidates:
         return None
     if merchant_domain:
@@ -62,3 +72,14 @@ def pick_brand_link(page: str, blog_host: str, merchant_domain: str | None) -> t
                 return url, anchor
     _, url, anchor = candidates[0]
     return url, anchor
+
+
+_SCRIPT_RE = re.compile(r"<(script|style|noscript|svg)\b.*?</\1>", re.S | re.I)
+
+
+def article_text(page: str) -> str:
+    """Readable text of the article body, for the AI judge."""
+    body = _SCRIPT_RE.sub(" ", _article_body(page))
+    body = re.sub(r"<(br|/p|/li|/h\d)\b[^>]*>", "\n", body, flags=re.I)
+    text = html.unescape(re.sub(r"<[^>]+>", " ", body))
+    return re.sub(r"[ \t]+", " ", re.sub(r"\n\s*\n+", "\n", text)).strip()

@@ -56,32 +56,34 @@ A deal is listed only if it's free (or a clearly stated BOGO / gift-with-purchas
 
 The scrapers enforce these rules in `scrapers/classify.py`, and each rejection is logged with its reason code.
 
-## Lead pipeline and review queue
+## Lead pipeline: mostly hands-off
 
 ```
-GitHub Actions (nightly) ─▶ scrapers/ ─┬─▶ deal_candidates ─▶ /admin/review ─▶ deals ─▶ site
-                                        │   (blogs, Steam, GOG;   human verifies     ▲
-                                        │    no public access)    terms + links      │
-                                        └─▶ Epic (first-party) ──────────────────────┘ published directly
+GitHub Actions (nightly, 12:05am PT) ─▶ scrapers/
+  ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
+  │    Epic (first-party feed) · trials.toml · fixed-date food calendar
+  ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
+  │    Hip2Save · PR Newswire           (shadow mode: record only)
+  └─ review queue (/admin/review): variable-date calendar entries, Steam, GOG
+Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ```
 
-| Source | How | Why |
-| --- | --- | --- |
-| Hip2Save RSS (trial) | lead → review, heavily filtered | ~1% of posts pass the inclusion rules; survivors arrive with brand link and dates prefilled |
-| PR Newswire restaurant + food feeds | lead → review | Brands' own announcements of national freebies: rare, but exact |
-| Food-holiday calendar (`scrapers/data/food_calendar.toml`) | lead → review, 21 days ahead | Recurring no-purchase freebies (Free Cone Day, 7-Eleven Day…); confirm each year with one click |
-| Steam free-to-keep | lead → review | Often DLC that needs a paid base game; no end date in API |
-| GOG giveaway | lead → review | End time is only rendered client-side |
-| Epic Games | **auto-published** as hero | First-party feed with exact start/end times. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule with no extra cron run |
+| Source | Handling |
+| --- | --- |
+| Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule |
+| `scrapers/data/trials.toml` | The file is the approval: listed trials publish, removed ones unpublish |
+| `scrapers/data/food_calendar.toml` | Fixed-date freebies publish 21 days ahead (hidden until the day); variable-date ones go to the queue to confirm the year's date |
+| Hip2Save, PR Newswire | Inclusion rules drop ~90% for free; Claude Haiku 4.5 judges the rest |
+| Steam, GOG | Review queue (DLC base-game and giveaway end dates need judgment) |
 
+**AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (default) records verdicts on the queue for comparison, and `publish` acts on them. Without an `ANTHROPIC_API_KEY` secret the judge is off. Expected cost at ~6 new leads/day is about $14/year.
 
-- **Scrapers** (`python -m scrapers`, stdlib only, no `pip install`): honor robots.txt, keep posts that look free, drop sponsored posts, discount-only posts and "free shipping" sales, flag food, and guess a merchant and category. Re-runs skip anything already queued, so a rejected lead never returns. Use `--dry-run` to preview without a database.
-- **Review queue** (`/admin/review`): a person checks the real terms and publishes or rejects each lead. Blogs are only a source of leads. Every published deal links to the brand's own page.
-- **Published deals** (`/admin/deals`): edit or unpublish anything live, scheduled or recently expired.
-- **Housekeeping** (`run_housekeeping()`, nightly after scraping): auto-rejects leads left pending for 14 days, deletes deals expired more than 90 days ago, and prunes login-failure records.
-- **Admin auth:** a single password, an HMAC-signed cookie, and lockout after 5 failed attempts per IP in 15 minutes.
+**Reports:** every deal card has "Report a problem" (rate-limited to 5/hour per visitor, using salted IP hashes, so no IPs are stored). Three distinct reporters within a week hide the deal until an admin unhides or unpublishes it at `/admin/deals`.
+
+- **Scrapers:** `python -m scrapers` (`--dry-run` to preview; `--dry-run --judge` also calls the AI). Robots.txt is honored on every fetch.
+- **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads pending for 14 days, deletes deals expired over 90 days ago, prunes login-failure records.
+- **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
 - **Tests:** `python -m unittest discover -s scrapers/tests -t .`
-- **Ruled-out sources** and why are documented in `scrapers/sources.py`.
 
 ## Project layout
 
@@ -102,7 +104,7 @@ scripts/seed.ts     service-role upsert of sample data
 | Phase | Scope | Status |
 | --- | --- | --- |
 | 1 | Web MVP: three tabs, badges, search and filters, PWA | Done (sample data) |
-| 1.5 | Data pipeline: scrapers, review queue, nightly cron | Done for Hip2Save, Epic, Steam, GOG. Social sources need a Meta developer account |
+| 1.5 | Data pipeline: scrapers, AI judge, curated trials and calendar, reports | AI judge in shadow mode; Instagram needs a Meta developer account |
 | 2 | Expo mobile app on the same Supabase backend | Planned |
 | 3 | Accounts and "Mark as claimed" | Planned |
 

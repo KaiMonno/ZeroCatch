@@ -25,11 +25,18 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install AI judge SDK
+        run: pip install "anthropic>=1,<2"
+
       - name: Unit tests
         run: python -m unittest discover -s scrapers/tests -t .
 
-      - name: Queue new leads
+      - name: Scrape, judge and publish
         run: python -m scrapers
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Without this secret the judge is off and leads go to the review queue.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Repository variable: "shadow" (record verdicts only) or "publish".
+          AI_JUDGE_MODE: ${{ vars.AI_JUDGE_MODE || 'shadow' }}

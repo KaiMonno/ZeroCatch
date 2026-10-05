@@ -3,6 +3,7 @@ import { formatDuration } from "@/lib/format";
 import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
+import { ReportDeal } from "./report-deal";
 
 export function DealCard({ deal }: { deal: Deal }) {
   return (
@@ -37,7 +38,10 @@ export function DealCard({ deal }: { deal: Deal }) {
 
       <div className="mt-auto flex flex-col gap-2.5">
         <DealBadges deal={deal} />
-        <ExpiryLabel expiresAt={deal.expires_at} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <ExpiryLabel expiresAt={deal.expires_at} />
+          <ReportDeal dealId={deal.id} dealTitle={deal.title} />
+        </div>
       </div>
     </article>
   );

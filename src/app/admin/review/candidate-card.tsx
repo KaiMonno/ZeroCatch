@@ -1,5 +1,5 @@
-import { ExternalLink } from "lucide-react";
-import type { DealCandidate } from "@/lib/types";
+import { Bot, ExternalLink } from "lucide-react";
+import type { AiVerdict, DealCandidate } from "@/lib/types";
 import { approveCandidate, rejectCandidate } from "../actions";
 import { DealForm } from "../deal-form";
 
@@ -12,6 +12,7 @@ function timeAgo(iso: string | null): string {
 }
 
 export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
+  const ai = candidate.ai_verdict?.qualifies ? candidate.ai_verdict : null;
   return (
     <article className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
       <div className="flex flex-wrap items-center gap-2 text-xs text-muted">
@@ -34,6 +35,8 @@ export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
       </h2>
       {candidate.summary && <p className="text-sm leading-relaxed text-muted">{candidate.summary}</p>}
 
+      {candidate.ai_verdict && <AiVerdictBadge verdict={candidate.ai_verdict} />}
+
       <div className="flex flex-wrap items-start gap-2">
         <details className="group w-full rounded-xl border border-line open:bg-bg/40">
           <summary className="cursor-pointer list-none rounded-xl px-3 py-2 text-sm font-medium text-emerald-300 hover:bg-white/5 [&::-webkit-details-marker]:hidden">
@@ -46,10 +49,13 @@ export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
               idPrefix={candidate.id}
               submitLabel="Publish deal"
               defaults={{
-                title: candidate.title,
-                merchant: candidate.suggested_merchant ?? "",
-                category: candidate.suggested_category ?? "pure_freebie",
-                url: candidate.suggested_url ?? undefined,
+                // Prefer the AI judge's cleaned-up fields when it has them.
+                title: ai?.title || candidate.title,
+                description: ai?.description,
+                merchant: ai?.merchant || candidate.suggested_merchant || "",
+                category: ai?.category ?? candidate.suggested_category ?? "pure_freebie",
+                requires_account: ai?.requires_account,
+                url: ai?.brand_url ?? candidate.suggested_url ?? undefined,
                 starts_at: candidate.suggested_starts_at,
                 expires_at: candidate.suggested_expires_at,
               }}
@@ -74,5 +80,21 @@ export function CandidateCard({ candidate }: { candidate: DealCandidate }) {
         </form>
       </div>
     </article>
+  );
+}
+
+/** Shadow-mode visibility into what the AI judge would have done. */
+function AiVerdictBadge({ verdict }: { verdict: AiVerdict }) {
+  const wouldPublish = verdict.decision === "publish";
+  return (
+    <p
+      className={`inline-flex items-center gap-1.5 self-start rounded-lg px-2 py-1 text-xs ring-1 ring-inset ${
+        wouldPublish ? "bg-emerald-500/10 text-emerald-200 ring-emerald-400/25" : "bg-white/5 text-muted ring-line"
+      }`}
+    >
+      <Bot aria-hidden className="size-3.5" />
+      AI: {wouldPublish ? "would publish" : `would reject (${verdict.decision.replace(/^ai: /, "")})`} ·{" "}
+      {verdict.confidence} confidence
+    </p>
   );
 }

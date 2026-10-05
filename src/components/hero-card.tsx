@@ -2,6 +2,7 @@ import { ExternalLink, Sparkles } from "lucide-react";
 import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
+import { ReportDeal } from "./report-deal";
 
 export function HeroCard({ deal }: { deal: Deal }) {
   return (
@@ -37,6 +38,9 @@ export function HeroCard({ deal }: { deal: Deal }) {
           <ExternalLink aria-hidden className="size-4" />
         </a>
         <ExpiryLabel expiresAt={deal.expires_at} />
+      </div>
+      <div className="mt-4">
+        <ReportDeal dealId={deal.id} dealTitle={deal.title} />
       </div>
     </section>
   );

@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { requireAdmin } from "@/lib/admin-session";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import type { Deal } from "@/lib/types";
+import type { Deal, ReportReason } from "@/lib/types";
 import { AdminNav } from "../admin-nav";
 import { PublishedDealRow } from "./published-deal-row";
 
@@ -27,19 +27,44 @@ async function loadDealGroups() {
   if (error) throw new Error(error.message);
 
   const deals = data as Deal[];
+
+  // Reports cascade-delete with their deal, so this table stays small.
+  const reports = new Map<string, DealReport[]>();
+  const { data: reportRows } = await supabase
+    .from("deal_reports")
+    .select("deal_id, reason, note, created_at")
+    .order("created_at", { ascending: false });
+  for (const row of (reportRows ?? []) as (DealReport & { deal_id: string })[]) {
+    reports.set(row.deal_id, [...(reports.get(row.deal_id) ?? []), row]);
+  }
+
+  const hidden = (d: Deal) => Boolean(d.hidden_at);
   const started = (d: Deal) => Date.parse(d.starts_at) <= now;
   const ended = (d: Deal) => d.expires_at !== null && Date.parse(d.expires_at) <= now;
-  return [
-    { label: "Live", deals: deals.filter((d) => started(d) && !ended(d)) },
-    { label: "Scheduled", deals: deals.filter((d) => !started(d)) },
-    { label: "Recently expired", deals: deals.filter(ended) },
-  ];
+  const visible = deals.filter((d) => !hidden(d));
+  return {
+    reports,
+    groups: [
+      { label: "Hidden by reports", deals: deals.filter(hidden) },
+      { label: "Reported", deals: visible.filter((d) => reports.has(d.id) && !ended(d)) },
+      { label: "Live", deals: visible.filter((d) => started(d) && !ended(d) && !reports.has(d.id)) },
+      { label: "Scheduled", deals: visible.filter((d) => !started(d) && !reports.has(d.id)) },
+      { label: "Recently expired", deals: visible.filter(ended) },
+    ].filter((g) => g.deals.length > 0 || ["Live", "Scheduled"].includes(g.label)),
+  };
+}
+
+export interface DealReport {
+  reason: ReportReason;
+  note: string | null;
+  created_at: string;
 }
 
 async function PublishedDeals() {
   await requireAdmin();
-  const groups = await loadDealGroups();
-  if (!groups) return <p className="text-sm text-muted">Connect Supabase to manage deals.</p>;
+  const loaded = await loadDealGroups();
+  if (!loaded) return <p className="text-sm text-muted">Connect Supabase to manage deals.</p>;
+  const { groups, reports } = loaded;
 
   return (
     <>
@@ -59,7 +84,7 @@ async function PublishedDeals() {
             <ul className="flex flex-col gap-2">
               {group.deals.map((deal) => (
                 <li key={deal.id}>
-                  <PublishedDealRow deal={deal} />
+                  <PublishedDealRow deal={deal} reports={reports.get(deal.id) ?? []} />
                 </li>
               ))}
             </ul>

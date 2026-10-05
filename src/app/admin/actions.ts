@@ -135,3 +135,21 @@ export async function deleteDeal(form: FormData): Promise<void> {
   if (error) throw new Error(error.message);
   publish();
 }
+
+export async function unhideDeal(form: FormData): Promise<void> {
+  await requireAdmin();
+  const dealId = text(form, "deal_id");
+  // Clearing the reports too means it takes fresh reports to hide it again.
+  const supabase = admin();
+  const { error } = await supabase.from("deals").update({ hidden_at: null }).eq("id", dealId);
+  if (error) throw new Error(error.message);
+  await supabase.from("deal_reports").delete().eq("deal_id", dealId);
+  publish();
+}
+
+export async function dismissReports(form: FormData): Promise<void> {
+  await requireAdmin();
+  const { error } = await admin().from("deal_reports").delete().eq("deal_id", text(form, "deal_id"));
+  if (error) throw new Error(error.message);
+  refresh();
+}
