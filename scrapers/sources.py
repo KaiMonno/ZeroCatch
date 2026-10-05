@@ -21,14 +21,15 @@ class Source:
 
 
 RSS_SOURCES: list[Source] = [
-    Source(
-        name="hip2save",
-        url="https://hip2save.com/category/freebies/feed/",
-        trusted_categories=frozenset({"Legit Freebies & Samples"}),
-    ),
-    # The main feed carries restaurant posts that the freebies category misses.
-    # Overlap is harmless: both feeds share post IDs, so source_key dedupes.
-    Source(name="hip2save", url="https://hip2save.com/feed/"),
+    # Hip2Save is paused (2026-10): ~1% of its posts meet the inclusion rules and
+    # most survivors lack a clean brand link. Re-enable by uncommenting.
+    # Source(
+    #     name="hip2save",
+    #     url="https://hip2save.com/category/freebies/feed/",
+    #     trusted_categories=frozenset({"Legit Freebies & Samples"}),
+    # ),
+    # Source(name="hip2save", url="https://hip2save.com/feed/"),
+    #
     # First-party announcements: brands post national freebies here. Rare
     # (a few a month) but exact, dated, and linking to the brand. The two
     # food-beverages URLs serve the same feed, so only one is listed.

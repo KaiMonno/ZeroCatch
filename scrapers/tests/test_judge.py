@@ -8,7 +8,7 @@ from scrapers.__main__ import apply_judge
 NOW = datetime(2026, 10, 4, 12, 0, tzinfo=timezone.utc)
 LINKS = [("https://www.starbucks.com/rewards", "Starbucks Rewards"), ("https://www.target.com/circle", "Target")]
 GOOD = {
-    "qualifies": True, "rejection_reason": "none", "confidence": "high", "category": "pure_freebie",
+    "qualifies": True, "rejection_reason": "none", "confidence": "high",
     "is_food": True, "merchant": "Starbucks", "title": "Free Coffee or Cookie at Target Starbucks",
     "description": "Free brewed coffee or cookie with a free Target Circle account.", "brand_link_index": 0,
     "requires_account": True, "requires_credit_card": False, "starts_on": "2026-10-06", "ends_on": "2026-10-06",

@@ -12,7 +12,7 @@ def c(title, summary="", categories=(), trusted=NONE):
 class KeepTest(unittest.TestCase):
     def test_keeps_free_titles(self):
         self.assertTrue(c("FREE Wawa Coffee – Today ONLY").keep)
-        self.assertTrue(c("BOGO Entrées at Chipotle Through Sunday").keep)
+        self.assertTrue(c("FREE Tillamook Ice Cream Coupon").keep)  # a coupon for a free item is a freebie
 
     def test_ignores_free_shipping_and_compound_words(self):
         self.assertFalse(c("Up to 65% Off Crocs + FREE Shipping").keep)
@@ -49,6 +49,21 @@ class InclusionRulesTest(unittest.TestCase):
     def assertRejected(self, title, reason):
         self.assertEqual(c(title).reject_reason, reason, title)
 
+    def test_purchase_required(self):
+        self.assertRejected("FREE Coffee With Any Purchase", "requires_purchase")
+        self.assertRejected("BOGO Entrées at Chipotle", "requires_purchase")
+        self.assertRejected("Free Fries When You Spend $1", "requires_purchase")
+
+    def test_points_and_credit(self):
+        self.assertRejected("FREE $15 Amazon Gift Card When You Donate Blood", "points_or_credit")
+        self.assertRejected("Grab a FREE $5 Groupon Credit", "points_or_credit")
+        self.assertRejected("FREE 500 Bonus Points at Sephora", "points_or_credit")
+        self.assertRejected("Score FREE Kohl's Cash Today", "points_or_credit")
+
+    def test_free_shipping(self):
+        self.assertRejected("Up to 65% Off Crocs + FREE Shipping", "free_shipping")
+        self.assertRejected("FREE Same-Day Delivery on Your First Order", "free_shipping")
+
     def test_paid_membership(self):
         self.assertRejected("TWO FREE eBooks for Amazon Prime Members", "paid_membership")
         self.assertRejected("Target Circle 360 Members! Claim Your Monthly Freebie", "paid_membership")
@@ -80,7 +95,7 @@ class InclusionRulesTest(unittest.TestCase):
 
     def test_roundups(self):
         self.assertRejected("National Taco Day | Here's Where to Grab Free Tacos", "roundup")
-        self.assertRejected("FREE KFC Bucket, BOGO Cakes + More Cheap Eats This Week!", "roundup")
+        self.assertRejected("FREE KFC Bucket + More Cheap Eats This Week!", "roundup")
         self.assertRejected("Score Freebies With These October Roblox Codes", "roundup")
 
 
@@ -88,9 +103,6 @@ class CategoryTest(unittest.TestCase):
     def test_pure_freebie(self):
         self.assertEqual(c("FREE IHOP Pancakes – No Purchase Needed").suggested_category, "pure_freebie")
 
-    def test_with_purchase(self):
-        self.assertEqual(c("FREE Coffee With Any Purchase").suggested_category, "free_with_purchase")
-        self.assertEqual(c("BOGO Entrées at Chipotle").suggested_category, "free_with_purchase")
 
     def test_trial(self):
         self.assertEqual(c("Get a FREE Trial of Notion").suggested_category, "free_trial")

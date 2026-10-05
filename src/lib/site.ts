@@ -12,4 +12,4 @@ export const SITE_URL = new URL(
 export const SITE_NAME = "ZeroCatch";
 export const SITE_TAGLINE = "Good-Faith Freebies";
 export const SITE_DESCRIPTION =
-  "Verified, no-strings-attached freebies, instant-cancel free trials, and honest free-with-purchase deals. No affiliate junk, no hidden card traps.";
+  "Verified, no-strings-attached freebies and instant-cancel free trials. No purchase, no affiliate junk, no hidden card traps.";

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "ZeroCatch: Good-Faith Freebies",
     short_name: "ZeroCatch",
-    description: "Verified freebies, instant-cancel trials, and honest free-with-purchase deals.",
+    description: "Verified freebies and instant-cancel free trials. No purchase, no catch.",
     start_url: "/",
     scope: "/",
     display: "standalone",
@@ -19,7 +19,6 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: "Free Trials", url: "/?tab=trials" },
-      { name: "Free With Purchase", url: "/?tab=with-purchase" },
     ],
   };
 }

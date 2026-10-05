@@ -1,7 +1,7 @@
-import { CreditCard, ShieldCheck, ShoppingBag, UserRound, type LucideIcon } from "lucide-react";
+import { CreditCard, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import type { Deal } from "@/lib/types";
 
-export type BadgeKind = "no-card" | "card-required" | "account" | "instant-cancel" | "with-purchase";
+export type BadgeKind = "no-card" | "card-required" | "account" | "instant-cancel";
 
 export const BADGES: Record<BadgeKind, { label: string; icon: LucideIcon; className: string; help: string }> = {
   "no-card": {
@@ -22,12 +22,6 @@ export const BADGES: Record<BadgeKind, { label: string; icon: LucideIcon; classN
     className: "bg-sky-500/12 text-sky-300 ring-sky-400/25",
     help: "Cancel right after signing up and keep the full trial.",
   },
-  "with-purchase": {
-    label: "With Purchase",
-    icon: ShoppingBag,
-    className: "bg-violet-500/12 text-violet-300 ring-violet-400/25",
-    help: "Free item unlocks after buying something.",
-  },
   "card-required": {
     label: "Card Required at Signup",
     icon: CreditCard,
@@ -40,7 +34,6 @@ export function badgesFor(deal: Deal): BadgeKind[] {
   const kinds: BadgeKind[] = [deal.requires_credit_card ? "card-required" : "no-card"];
   if (deal.requires_account) kinds.push("account");
   if (deal.instant_cancel_safe) kinds.push("instant-cancel");
-  if (deal.category === "free_with_purchase") kinds.push("with-purchase");
   return kinds;
 }
 

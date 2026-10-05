@@ -5,7 +5,7 @@ import unittest
 
 from scrapers.epic import parse_epic
 from scrapers.gog import parse_giveaway
-from scrapers.steam import build_lead, parse_search
+from scrapers.steam import build_deal, parse_search
 
 
 def epic_element(title, *, current=None, upcoming=None, pct=0, mappings=("game-abc123",), url_slug=None):
@@ -68,19 +68,19 @@ class SteamTest(unittest.TestCase):
         rows = parse_search(STEAM_HTML)
         self.assertEqual([(a, n) for a, n, _ in rows], [("111", "Cool & Game"), ("222", "Some DLC")])
 
-    def test_full_game_is_pure_freebie(self):
-        lead = build_lead("111", "Cool & Game", "https://store.steampowered.com/app/111/", {"type": "game"})
-        self.assertEqual(lead["suggested_category"], "pure_freebie")
-        self.assertEqual(lead["source_key"], "steam:111")
+    def test_full_game_is_published(self):
+        deal = build_deal("111", "Cool & Game", "https://store.steampowered.com/app/111/", {"type": "game"})
+        self.assertEqual(deal["source_key"], "steam:111")
+        self.assertEqual(deal["title"], "Cool & Game: Free to Keep on Steam")
+        self.assertIsNone(deal["expires_at"])  # the nightly sync handles removal
 
-    def test_dlc_flags_base_game(self):
-        details = {"type": "dlc", "fullgame": {"name": "Base Game"}, "short_description": "New skins."}
-        lead = build_lead("222", "Some DLC", "https://store.steampowered.com/app/222/", details)
-        self.assertEqual(lead["suggested_category"], "free_with_purchase")
-        self.assertTrue(lead["summary"].startswith("DLC: requires Base Game."))
+    def test_dlc_is_excluded(self):
+        details = {"type": "dlc", "fullgame": {"name": "Base Game"}}
+        self.assertIsNone(build_deal("222", "Some DLC", "https://store.steampowered.com/app/222/", details))
 
-    def test_missing_details_still_makes_a_lead(self):
-        self.assertEqual(build_lead("1", "X", "https://s/app/1/", None)["suggested_category"], "pure_freebie")
+    def test_unverified_items_are_excluded(self):
+        self.assertIsNone(build_deal("1", "X", "https://s/app/1/", None))
+        self.assertIsNone(build_deal("2", "OST", "https://s/app/2/", {"type": "music"}))
 
 
 GOG_HTML = """
@@ -92,17 +92,17 @@ GOG_HTML = """
 
 class GogTest(unittest.TestCase):
     def test_parses_giveaway_with_title_from_json(self):
-        lead = parse_giveaway(GOG_HTML)
-        self.assertEqual(lead["title"], "GOG giveaway: Nox™ Classic")
-        self.assertEqual(lead["source_url"], "https://www.gog.com/en/game/nox_classic")
-        self.assertEqual(lead["source_key"], "gog:giveaway:nox_classic")
+        deal = parse_giveaway(GOG_HTML)
+        self.assertEqual(deal["title"], "Nox™ Classic: Free on GOG")
+        self.assertEqual(deal["url"], "https://www.gog.com/en/game/nox_classic")
+        self.assertEqual(deal["source_key"], "gog:giveaway:nox_classic")
 
     def test_no_giveaway(self):
         self.assertIsNone(parse_giveaway("<html>no banner today</html>"))
 
     def test_falls_back_to_slug_title(self):
         html = GOG_HTML.replace('"slug":"nox_classic"', '"slug":"other"')
-        self.assertEqual(parse_giveaway(html)["title"], "GOG giveaway: Nox Classic")
+        self.assertEqual(parse_giveaway(html)["title"], "Nox Classic: Free on GOG")
 
 
 if __name__ == "__main__":

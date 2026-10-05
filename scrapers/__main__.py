@@ -4,11 +4,12 @@
     python -m scrapers --dry-run         # fetch and print; no database, no AI calls
     python -m scrapers --dry-run --judge # also call the AI judge on fresh leads (costs money)
 
-Published directly (the source or file is the approval): Epic, curated
-trials (data/trials.toml), fixed-date calendar freebies.
-AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them):
-blog and press-release leads.
-Review queue: variable-date calendar entries, Steam, GOG.
+Published directly (the source or file is the approval): Epic, Steam
+free-to-keep games (no DLC), the GOG giveaway, curated trials
+(data/trials.toml), fixed-date calendar freebies.
+AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them;
+=off queues them): press-release and Instagram brand-post leads.
+Review queue: variable-date calendar entries.
 """
 
 import argparse
@@ -21,10 +22,7 @@ from . import judge, supabase_rest
 from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
 from .epic import fetch_epic_deals
-from .gog import fetch_gog_leads
-from .steam import fetch_steam_leads
-from .trials import KEY_PREFIX as TRIAL_PREFIX
-from .trials import fetch_trial_deals
+from . import gog, instagram, steam, trials
 
 
 def _run(name: str, collector: Callable[[], object], errors: list[str], default: object) -> object:
@@ -81,16 +79,23 @@ def main() -> int:
     leads = [
         *_run("blogs", lambda: fetch_blog_leads(args.max_age_days, blog_stats), errors, []),
         *calendar_leads,
-        *_run("steam", fetch_steam_leads, errors, []),
-        *_run("gog", fetch_gog_leads, errors, []),
+        *_run("instagram", instagram.fetch_instagram_leads, errors, []),
     ]
     print(format_stats(blog_stats))
     epic_deals = _run("epic", fetch_epic_deals, errors, [])
-    trial_deals = _run("trials", fetch_trial_deals, errors, [])
+    # Synced sources: whatever the source lists now is published, and anything
+    # it stopped listing is unpublished. None means "fetch failed: don't sync".
+    synced = {
+        "steam": (steam.KEY_PREFIX, _run("steam", steam.fetch_steam_deals, errors, None)),
+        "gog": (gog.KEY_PREFIX, _run("gog", gog.fetch_gog_deals, errors, None)),
+        "trials": (trials.KEY_PREFIX, _run("trials", trials.fetch_trial_deals, errors, None)),
+    }
     mode = judge.judge_mode()
 
     if args.dry_run:
-        for title, group in (("Epic", epic_deals), ("Curated trials", trial_deals), ("Calendar", calendar_deals)):
+        groups = [("Epic", epic_deals), ("Calendar", calendar_deals)]
+        groups += [(name, deals or []) for name, (_, deals) in synced.items()]
+        for title, group in groups:
             for d in group:
                 window = f"{d['starts_at'][:10]} → {d['expires_at'][:10]}" if d.get("expires_at") else "no end date"
                 print(f"  ★ [{title}] {d['title']}  {window}")
@@ -109,21 +114,21 @@ def main() -> int:
         print(f"\nAI judge mode: {mode}")
     else:
         # Separate calls: PostgREST bulk upserts need identical keys per row, and
-        # trials omit starts_at so the column default applies.
-        for label, group in (("Epic", epic_deals), ("curated trial", trial_deals), ("calendar", calendar_deals)):
+        # synced sources omit starts_at so the column default applies.
+        for label, group in (("Epic", epic_deals), ("calendar", calendar_deals)):
             try:
                 print(f"Published {supabase_rest.upsert_deals(group)} {label} deals")
             except supabase_rest.SupabaseError as err:
                 errors.append(f"publish {label} deals: {err}")
-        # Only sync when the trials file loaded; an empty list from a parse error
-        # must not unpublish every trial.
-        if not any(e.startswith("trials:") for e in errors):
+        for name, (prefix, deals) in synced.items():
+            if deals is None:
+                continue  # fetch failed: leave what's published untouched
             try:
-                if removed := supabase_rest.delete_stale_deals(TRIAL_PREFIX, [d["source_key"] for d in trial_deals]):
-                    print(f"Unpublished {removed} trials removed from trials.toml")
+                published = supabase_rest.upsert_deals(deals)
+                removed = supabase_rest.delete_stale_deals(prefix, [d["source_key"] for d in deals])
+                print(f"Synced {name}: {published} published, {removed} unpublished")
             except supabase_rest.SupabaseError as err:
-                errors.append(f"sync trials: {err}")
-
+                errors.append(f"sync {name}: {err}")
         try:
             known = supabase_rest.existing_candidate_keys([lead["source_key"] for lead in leads])
             new_leads = [lead for lead in leads if lead["source_key"] not in known]

@@ -6,7 +6,6 @@
 | --- | --- | --- |
 | Pure Freebies | `/` | Free with no payment method. Account or promo code at most. |
 | Instant-Cancel Trials | `/?tab=trials` | Trials you can cancel on day one and still keep the full period. Sorted longest first. |
-| Free With Purchase | `/?tab=with-purchase` | BOGO and gift-with-purchase deals, kept out of the free feed. |
 
 Search (`q`) and filter chips (`f=no-card,no-account,ending-soon`) live in the URL, so every view can be shared and is rendered on the server.
 
@@ -26,7 +25,7 @@ To use a real database:
 1. Create a free Supabase project.
 2. Run each file in `supabase/migrations/` in filename order (SQL editor or `supabase db push`).
 3. `cp .env.example .env.local` and fill in the URL, anon (publishable) key, service-role (secret) key, and an admin password.
-4. `npm run seed` upserts the 10 sample deals. It's idempotent because rows are keyed on `source_key`.
+4. `npm run seed` upserts the 8 sample deals. It's idempotent because rows are keyed on `source_key`.
 
 Sample deals in `src/data/seed-deals.ts` are illustrative. Verify each one's real terms before publishing it.
 
@@ -44,27 +43,17 @@ Row-level security allows `SELECT` for the anon role only. Writes go through the
 
 ## What qualifies
 
-A deal is listed only if it's free (or a clearly stated BOGO / gift-with-purchase for Tab 3) and is **none** of:
-
-- gated behind a **paid** membership (Prime, Circle 360, Walmart+, carrier perks, warehouse clubs, DashPass…). Free loyalty accounts are fine: that's the 🟡 Account Required badge
-- a rebate or cash-back offer (you pay first)
-- limited quantity ("first 50 customers")
-- an in-store event or workshop
-- for one audience only (teachers, students, military…)
-- a contest or sweepstakes
-- a roundup of many deals rather than one deal
-
-The scrapers enforce these rules in `scrapers/classify.py`, and each rejection is logged with its reason code.
+The public rules are on the site at `/what-qualifies`. A deal is listed only if it's free with **no purchase of any kind**, or an instant-cancel trial, and is none of: points/credit/gift cards, free shipping or delivery, gated behind a paid membership, a rebate or cash back, limited quantity, an in-store event, for one audience only, a contest, or a roundup. The scrapers enforce these in `scrapers/classify.py` (each rejection is logged with its reason code), and the database blocks the retired `free_with_purchase` category.
 
 ## Lead pipeline: mostly hands-off
 
 ```
 GitHub Actions (nightly, 12:05am PT) ─▶ scrapers/
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
-  │    Epic (first-party feed) · trials.toml · fixed-date food calendar
+  │    Epic · Steam (no DLC) · GOG · trials.toml · fixed-date food calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
-  │    Hip2Save · PR Newswire           (shadow mode: record only)
-  └─ review queue (/admin/review): variable-date calendar entries, Steam, GOG
+  │    PR Newswire · Instagram brand posts   (AI_JUDGE_MODE: off / shadow / publish)
+  └─ review queue (/admin/review): variable-date calendar entries, judged leads while the judge is off
 Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ```
 
@@ -73,14 +62,18 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule |
 | `scrapers/data/trials.toml` | The file is the approval: listed trials publish, removed ones unpublish |
 | `scrapers/data/food_calendar.toml` | Fixed-date freebies publish 21 days ahead (hidden until the day); variable-date ones go to the queue to confirm the year's date |
-| Hip2Save, PR Newswire | Inclusion rules drop ~90% for free; Claude Haiku 4.5 judges the rest |
-| Steam, GOG | Review queue (DLC base-game and giveaway end dates need judgment) |
+| Steam free-to-keep | Auto-published if Steam's API says it's a full game (DLC excluded); unpublished the night it leaves the free list |
+| GOG giveaway | Auto-published; unpublished the night the homepage banner is gone |
+| PR Newswire, Instagram brand accounts | Inclusion rules, then the AI judge (or the review queue while the judge is off) |
+| Hip2Save | Paused: ~1% of posts qualified |
 
 **AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (default) records verdicts on the queue for comparison, and `publish` acts on them. Without an `ANTHROPIC_API_KEY` secret the judge is off. Expected cost at ~6 new leads/day is about $14/year.
 
 **Reports:** every deal card has "Report a problem" (rate-limited to 5/hour per visitor, using salted IP hashes, so no IPs are stored). Three distinct reporters within a week hide the deal until an admin unhides or unpublishes it at `/admin/deals`.
 
 - **Scrapers:** `python -m scrapers` (`--dry-run` to preview; `--dry-run --judge` also calls the AI). Robots.txt is honored on every fetch.
+- **Instagram:** `python -m scrapers.instagram --check` reports, for each brand in `scrapers/data/instagram_brands.toml`, whether the account was found and which recent posts look like freebies. Needs `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_USER_ID` (Meta Graph API business discovery, Standard Access, no App Review).
+- **Manual workflow options:** Actions → Scrape leads → Run workflow → `judge_check` (AI verdicts on current leads) or `instagram_check` (Instagram report). Neither writes anything.
 - **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads pending for 14 days, deletes deals expired over 90 days ago, prunes login-failure records.
 - **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
 - **Tests:** `python -m unittest discover -s scrapers/tests -t .`

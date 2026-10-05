@@ -1,8 +1,9 @@
 """ZeroCatch's inclusion rules as keyword heuristics.
 
-A lead must be free (or BOGO), and must NOT be any of: gated behind a paid
-membership, a rebate/cash-back offer, limited quantity, an in-store event,
-for one audience only, a contest, or a roundup of many deals. These rules
+A lead must be free, and must NOT be any of: purchase-required (BOGO, gift
+with purchase), points/credit/gift-card offers, free shipping or delivery,
+gated behind a paid membership, a rebate/cash-back offer, limited quantity,
+an in-store event, for one audience only, a contest, or a roundup. These rules
 are product decisions, so each rejection carries a reason code that the
 scraper reports. That makes the filter measurable and easy to tune.
 """
@@ -25,19 +26,27 @@ _PURCHASE_RE = re.compile(
     r"min(imum)? (purchase|order)|\$\d+\+? (purchase|order))\b",
     re.I,
 )
+# Fulfillment perks: when "free shipping/delivery" is the only free thing, the
+# deal is rejected with its own reason rather than lumped in with "not free".
+_SHIPPING_RE = re.compile(r"\bfree (?:[\w-]+ ){0,2}(?:shipping|delivery|returns|pickup)\b|\bships free\b", re.I)
 _TRIAL_RE = re.compile(r"\bfree trial\b|\b\d+[- ](day|week|month)s? free\b", re.I)
 # Price-cut posts ("$5 off", "Only $43") are discounts, not freebies.
 _DISCOUNT_ONLY_RE = re.compile(r"\$\d+(\.\d\d)? off\b|\bonly \$\d|\breg\. \$\d|\d+% off\b", re.I)
 
 # Order matters: the first matching rule is the reported reason.
 REJECT_RULES: list[tuple[str, re.Pattern[str]]] = [
+    ("requires_purchase", _PURCHASE_RE),
+    ("rebate", re.compile(
+        r"after (easy )?(online )?(rebate|cash ?back|\w+ cash|\w+ rewards)|better than free|\bibotta\b|"
+        r"fetch rewards|money ?back|cash back", re.I)),
+    # Money-adjacent "freebies": points, store credit, gift cards, bonus bucks.
+    ("points_or_credit", re.compile(
+        r"\bpoints?\b|\bcredits?\b|store credit|gift cards?|e-?gift|\bbonus bucks\b|extrabucks|"
+        r"rewards dollars|\bcash\b|\$\d+ (off|free)", re.I)),
     ("paid_membership", re.compile(
         r"\bprime\b|circle 360|walmart\+|walmart plus|verizon|t-mobile|at&t|sam'?s club|costco|siriusxm|"
         r"dashpass|disney\+|kindle unlimited|audible|uber one|instacart\+|grubhub\+|paramount\+|peacock|"
         r"\bhulu\b|netflix|spotify premium|youtube premium|chatgpt plus", re.I)),
-    ("rebate", re.compile(
-        r"after (easy )?(online )?(rebate|cash ?back|\w+ cash|\w+ rewards)|better than free|\bibotta\b|"
-        r"fetch rewards|money ?back|cash back", re.I)),
     ("contest", re.compile(
         r"\bwin\b|\bwinners?\b|sweepstakes|\bgiveaway\b|enter (to|for)|instant win|chance to", re.I)),
     ("limited_quantity", re.compile(
@@ -123,6 +132,8 @@ def classify(title: str, summary: str, categories: list[str], trusted: frozenset
     has_free = bool(_FREE_RE.search(title))
     if BLOCKED_CATEGORIES.intersection(categories):
         reason = "sponsored"
+    elif not has_free and _SHIPPING_RE.search(title):
+        reason = "free_shipping"
     elif not (has_free or trusted.intersection(categories)):
         reason = "not_free"
     elif _DISCOUNT_ONLY_RE.search(title) and not has_free:
@@ -131,11 +142,6 @@ def classify(title: str, summary: str, categories: list[str], trusted: frozenset
         # Rules read the title only: summaries are padded with unrelated promos.
         reason = next((name for name, rx in REJECT_RULES if rx.search(title)), None)
 
-    if _TRIAL_RE.search(text):
-        category = "free_trial"
-    elif _PURCHASE_RE.search(text):
-        category = "free_with_purchase"
-    else:
-        category = "pure_freebie"
+    category = "free_trial" if _TRIAL_RE.search(text) else "pure_freebie"
 
     return Classification(reason, is_food, category if reason is None else None, merchant)

@@ -1,4 +1,6 @@
-export type DealCategory = "pure_freebie" | "free_trial" | "free_with_purchase";
+// "free_with_purchase" still exists in the database enum but is retired: the
+// site only lists true freebies and instant-cancel trials.
+export type DealCategory = "pure_freebie" | "free_trial";
 
 /** Mirrors a row in `public.deals` / `public.active_deals`. */
 export interface Deal {

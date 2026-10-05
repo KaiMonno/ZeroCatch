@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { SearchX } from "lucide-react";
 import { BadgeLegend } from "@/components/badge-legend";
 import { DealCard } from "@/components/deal-card";
+import { EmptyState } from "@/components/empty-state";
 import { FilterChips } from "@/components/filter-chips";
 import { HeroCard } from "@/components/hero-card";
 import { SearchBar } from "@/components/search-bar";
@@ -75,13 +75,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </ul>
         </section>
       ) : (
-        heroes.length === 0 && (
-          <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-line px-6 py-14 text-center">
-            <SearchX aria-hidden className="size-8 text-muted" />
-            <p className="font-medium text-fg">No deals match right now</p>
-            <p className="text-sm text-muted">Try clearing filters or a different search.</p>
-          </div>
-        )
+        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={filters} />
       )}
 
       <BadgeLegend />

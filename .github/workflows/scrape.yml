@@ -11,6 +11,10 @@ on:
         description: "Dry run: print AI verdicts on current leads, write nothing (~$0.01)"
         type: boolean
         default: false
+      instagram_check:
+        description: "Instagram report: per-brand status and freebie-looking posts, writes nothing"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -37,18 +41,28 @@ jobs:
         run: python -m unittest discover -s scrapers/tests -t .
 
       - name: Scrape, judge and publish
-        if: ${{ !inputs.judge_check }}
+        if: ${{ !inputs.judge_check && !inputs.instagram_check }}
         run: python -m scrapers
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           # Without this secret the judge is off and leads go to the review queue.
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          # Repository variable: "shadow" (record verdicts only) or "publish".
+          # Repository variable: "off", "shadow" (record verdicts only) or "publish".
           AI_JUDGE_MODE: ${{ vars.AI_JUDGE_MODE || 'shadow' }}
+          # Optional: without these the Instagram source is skipped.
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
 
       - name: Judge check (dry run, nothing written)
         if: ${{ inputs.judge_check }}
         run: python -m scrapers --dry-run --judge
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Instagram check (report only, nothing written)
+        if: ${{ inputs.instagram_check }}
+        run: python -m scrapers.instagram --check
+        env:
+          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
+          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}

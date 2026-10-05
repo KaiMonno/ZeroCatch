@@ -10,6 +10,9 @@
 #
 # Inclusion bar (same as the rest of ZeroCatch): free with no purchase and no
 # paid membership. `verified` records the last year it was confirmed.
+# `requires_account = true` when a free app/rewards account is needed.
+# Use "~" for anything a brand hasn't repeated reliably, so it's confirmed yearly.
+# Not calendarable: Taco Bell "Steal a Base, Steal a Taco" (depends on the World Series).
 
 [[event]]
 key = "ihop-pancake-day"
@@ -73,3 +76,51 @@ description = "Wear a costume to a participating U.S. Krispy Kreme shop on Hallo
 url = "https://www.krispykreme.com/"
 date = "10-31"
 verified = "2025-10-31: free doughnut in costume, no purchase (Business Wire release)"
+
+[[event]]
+key = "krispy-kreme-st-patricks"
+merchant = "Krispy Kreme"
+title = "Free Doughnut When You Wear Green for St. Patrick's Day"
+description = "Wear green to a participating U.S. Krispy Kreme shop (in-shop or drive-thru) for a free O'riginal Glazed doughnut. No purchase necessary."
+url = "https://www.krispykreme.com/"
+date = "03-17"
+verified = "2026-03-16/17: free doughnut for wearing green, no purchase (AOL, Cheapism)"
+
+[[event]]
+key = "wawa-day"
+merchant = "Wawa"
+title = "Free Any-Size Hot Coffee on Wawa Day"
+description = "Free hot coffee of any size for Wawa Rewards members (free to join) at all Wawa stores, all day. No purchase needed."
+url = "https://www.wawa.com/rewards"
+date = "~04-16"
+requires_account = true
+verified = "2026-04-16: free any-size hot coffee for Rewards members (NBC Philadelphia)"
+
+[[event]]
+key = "auntie-annes-pretzel-day"
+merchant = "Auntie Anne's"
+title = "Free Pretzel on National Pretzel Day"
+description = "Free Original or Cinnamon Sugar pretzel for Auntie Anne's Rewards members (free app), in-store or online. No purchase necessary."
+url = "https://www.auntieannes.com/"
+date = "~04-26"
+requires_account = true
+verified = "2026-04-26: free pretzel in the Rewards app, no purchase (Hip2Save, GoTo Foods release)"
+
+[[event]]
+key = "chick-fil-a-cow-appreciation"
+merchant = "Chick-fil-A"
+title = "Free Entrée for Dressing Like a Cow"
+description = "Come dressed in cow-themed attire to a participating Chick-fil-A (typically 7am–7pm) for a free entrée like a Chicken Sandwich or 8-count Nuggets. No purchase needed."
+url = "https://www.chick-fil-a.com/"
+date = "~07-14"
+verified = "2026-07-14: returned after a 2020-2025 hiatus for the 80th birthday (WSLS, FOX 10); confirm it repeats"
+
+[[event]]
+key = "whataburger-coffee-day"
+merchant = "Whataburger"
+title = "Free Coffee on National Coffee Day"
+description = "A free hot or iced coffee from Whataburger on National Coffee Day, ordered in the app or online. No purchase required."
+url = "https://whataburger.com/"
+date = "09-29"
+requires_account = true
+verified = "2024-09-29 and 2026-09-29: free coffee, no purchase (Slickdeals threads)"

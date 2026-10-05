@@ -8,7 +8,6 @@ import type { DealReport } from "./page";
 const CATEGORY_LABEL = {
   pure_freebie: "Freebie",
   free_trial: "Trial",
-  free_with_purchase: "With purchase",
 } as const;
 
 export function PublishedDealRow({ deal, reports }: { deal: Deal; reports: DealReport[] }) {

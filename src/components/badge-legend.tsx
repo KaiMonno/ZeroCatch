@@ -1,7 +1,8 @@
+import Link from "next/link";
 import { ChevronDown, Info } from "lucide-react";
 import { BADGES, Badge, type BadgeKind } from "./deal-badges";
 
-const ORDER: BadgeKind[] = ["no-card", "account", "instant-cancel", "with-purchase", "card-required"];
+const ORDER: BadgeKind[] = ["no-card", "account", "instant-cancel", "card-required"];
 
 export function BadgeLegend() {
   return (
@@ -21,6 +22,12 @@ export function BadgeLegend() {
           </div>
         ))}
       </dl>
+      <p className="border-t border-line px-4 py-3 text-xs text-muted">
+        Every deal passes our rules: no purchase, no paid membership, no hidden catch.{" "}
+        <Link href="/what-qualifies" className="text-fg underline underline-offset-4">
+          See what qualifies
+        </Link>
+      </p>
     </details>
   );
 }

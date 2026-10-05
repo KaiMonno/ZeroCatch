@@ -41,8 +41,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <span className="text-xs text-muted">No traps. No affiliate junk.</span>
         </header>
         {children}
-        <footer className="mx-auto w-full max-w-5xl px-4 pb-8 text-xs text-muted">
-          Open source · Deals are checked, but always confirm terms before signing up.
+        <footer className="mx-auto flex w-full max-w-5xl flex-wrap gap-x-3 gap-y-1 px-4 pb-8 text-xs text-muted">
+          <Link href="/what-qualifies" className="underline-offset-4 hover:text-fg hover:underline">
+            What qualifies
+          </Link>
+          <span aria-hidden>·</span>
+          <span>Open source</span>
+          <span aria-hidden>·</span>
+          <span>Deals are checked, but always confirm terms before signing up.</span>
         </footer>
       </body>
     </html>

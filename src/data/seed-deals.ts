@@ -145,31 +145,5 @@ export function buildSeedDeals(now = new Date()): DealInsert[] {
       expires_at: null,
     },
 
-    // ── Tab 3: Free With Purchase ───────────────────────────────────────
-    {
-      ...base,
-      source_key: "seed:starbucks-bogo",
-      title: "BOGO Handcrafted Drinks",
-      description:
-        "Buy any grande or larger handcrafted drink, get a second free. Starbucks Rewards members, after 12pm.",
-      category: "free_with_purchase",
-      merchant: "Starbucks",
-      url: "https://www.starbucks.com/rewards",
-      requires_account: true,
-      starts_at: daysAgo(1),
-      expires_at: inDays(1),
-    },
-    {
-      ...base,
-      source_key: "seed:panera-sandwich-coffee",
-      title: "Free Coffee With Any Sandwich",
-      description:
-        "Buy any sandwich and get a free hot or iced coffee of any size. Order in-app or in-store.",
-      category: "free_with_purchase",
-      merchant: "Panera Bread",
-      url: "https://www.panerabread.com/",
-      starts_at: daysAgo(4),
-      expires_at: inDays(12),
-    },
   ];
 }

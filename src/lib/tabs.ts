@@ -15,13 +15,6 @@ export const TABS = [
     shortLabel: "Trials",
     blurb: "Cancel on day one, keep the full trial. Longest first.",
   },
-  {
-    slug: "with-purchase",
-    category: "free_with_purchase",
-    label: "Free With Purchase",
-    shortLabel: "With Purchase",
-    blurb: "BOGO and gift-with-purchase deals, kept out of the free feed.",
-  },
 ] as const satisfies readonly {
   slug: string;
   category: DealCategory;

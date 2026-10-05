@@ -1,0 +1,130 @@
+# Instagram brand accounts to watch (Meta Graph API "business discovery").
+# Only Business/Creator accounts can be read; a wrong or non-business handle is
+# reported by `python -m scrapers.instagram --check`. Handles below are best
+# guesses: fix any the check flags. `url` is where the lead links, since
+# Instagram captions can't carry clickable links.
+
+[[brand]]
+handle = "dunkin"
+merchant = "Dunkin'"
+url = "https://www.dunkindonuts.com/en/dunkin-rewards"
+
+[[brand]]
+handle = "starbucks"
+merchant = "Starbucks"
+url = "https://www.starbucks.com/rewards"
+
+[[brand]]
+handle = "tacobell"
+merchant = "Taco Bell"
+url = "https://www.tacobell.com/rewards"
+
+[[brand]]
+handle = "chickfila"
+merchant = "Chick-fil-A"
+url = "https://www.chick-fil-a.com/"
+
+[[brand]]
+handle = "mcdonalds"
+merchant = "McDonald's"
+url = "https://www.mcdonalds.com/us/en-us/deals.html"
+
+[[brand]]
+handle = "wendys"
+merchant = "Wendy's"
+url = "https://www.wendys.com/"
+
+[[brand]]
+handle = "burgerking"
+merchant = "Burger King"
+url = "https://www.bk.com/"
+
+[[brand]]
+handle = "kfc"
+merchant = "KFC"
+url = "https://www.kfc.com/"
+
+[[brand]]
+handle = "krispykreme"
+merchant = "Krispy Kreme"
+url = "https://www.krispykreme.com/"
+
+[[brand]]
+handle = "dairyqueen"
+merchant = "Dairy Queen"
+url = "https://www.dairyqueen.com/"
+
+[[brand]]
+handle = "7eleven"
+merchant = "7-Eleven"
+url = "https://www.7-eleven.com/"
+
+[[brand]]
+handle = "chipotle"
+merchant = "Chipotle"
+url = "https://www.chipotle.com/"
+
+[[brand]]
+handle = "popeyes"
+merchant = "Popeyes"
+url = "https://www.popeyes.com/"
+
+[[brand]]
+handle = "subway"
+merchant = "Subway"
+url = "https://www.subway.com/"
+
+[[brand]]
+handle = "dominos"
+merchant = "Domino's"
+url = "https://www.dominos.com/"
+
+[[brand]]
+handle = "pizzahut"
+merchant = "Pizza Hut"
+url = "https://www.pizzahut.com/"
+
+[[brand]]
+handle = "panerabread"
+merchant = "Panera Bread"
+url = "https://www.panerabread.com/"
+
+[[brand]]
+handle = "arbys"
+merchant = "Arby's"
+url = "https://www.arbys.com/"
+
+[[brand]]
+handle = "whataburger"
+merchant = "Whataburger"
+url = "https://whataburger.com/"
+
+[[brand]]
+handle = "wawa"
+merchant = "Wawa"
+url = "https://www.wawa.com/rewards"
+
+[[brand]]
+handle = "ihop"
+merchant = "IHOP"
+url = "https://www.ihop.com/"
+
+[[brand]]
+handle = "benandjerrys"
+merchant = "Ben & Jerry's"
+url = "https://www.benjerry.com/"
+
+[[brand]]
+handle = "auntieannespretzels"
+merchant = "Auntie Anne's"
+url = "https://www.auntieannes.com/"
+
+[[brand]]
+handle = "ritasitalianice"
+merchant = "Rita's"
+url = "https://www.ritasice.com/"
+
+[[brand]]
+handle = "smoothieking"
+merchant = "Smoothie King"
+url = "https://www.smoothieking.com/rewards/"

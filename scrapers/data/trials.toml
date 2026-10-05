@@ -3,10 +3,11 @@
 # removed from it. Only list trials you can cancel right after signing up while
 # keeping the full trial period. Re-check `verified` every few months.
 #
-# Rejected (do not add):
-# - Spotify Premium: its promotional terms say cancelling during a free trial
-#   ends Premium immediately (spotify.com/us/legal/premium-promotional-offer-terms,
-#   checked 2026-10-04).
+# Rejected (do not add): cancelling during the trial ends access immediately.
+# - Spotify Premium: spotify.com/us/legal/premium-promotional-offer-terms (2026-10-04)
+# - LinkedIn Premium: linkedin.com/help/linkedin/answer/a545578 (2026-10-05)
+# - Walmart+: Walmart+ terms, "free-trial cancellations end access immediately" (2026-10-05)
+# Pending: Audible (sources conflict; official help page needs sign-in).
 
 [[trial]]
 key = "amazon-prime"
@@ -27,3 +28,53 @@ url = "https://www.youtube.com/premium"
 duration_days = 30
 requires_credit_card = true
 verified = "2026-10-04: 1-month trial; Google help: benefits continue until the end of the period after cancelling"
+
+[[trial]]
+key = "microsoft-365"
+merchant = "Microsoft"
+title = "Microsoft 365: 1 Month Free"
+description = "Word, Excel, PowerPoint, Outlook and 1 TB of OneDrive storage for a month. Turn off recurring billing right after signing up and keep using it until the trial expires."
+url = "https://www.microsoft.com/en-us/microsoft-365/try"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-05: Microsoft Support, 'Cancel your free trial of Microsoft 365': keep access until the Expires on date"
+
+[[trial]]
+key = "kindle-unlimited"
+merchant = "Amazon"
+title = "Kindle Unlimited: 30-Day Free Trial"
+description = "Read from millions of ebooks and audiobooks for 30 days. Cancel right after signing up and your membership stays active until the trial would have billed."
+url = "https://www.amazon.com/kindle-dbs/hz/subscribe/ku"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-05: Amazon help, membership remains active until the next billing date; multiple guides agree"
+
+[[trial]]
+key = "amazon-music-unlimited"
+merchant = "Amazon"
+title = "Amazon Music Unlimited: 30-Day Free Trial"
+description = "Ad-free, on-demand music for 30 days (new subscribers). Cancel anytime during the trial and keep listening until it ends."
+url = "https://www.amazon.com/music/unlimited"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-05: multiple guides; same Amazon policy as Kindle Unlimited (active until next billing date)"
+
+[[trial]]
+key = "hulu"
+merchant = "Hulu"
+title = "Hulu (With Ads): 30-Day Free Trial"
+description = "Stream Hulu's library for 30 days (new subscribers, With Ads plan). Cancel in Account settings and keep watching until the end of the trial."
+url = "https://www.hulu.com/welcome"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-05: multiple guides; Hulu help page is JS-rendered, re-check by hand"
+
+[[trial]]
+key = "canva-pro"
+merchant = "Canva"
+title = "Canva Pro: 30-Day Free Trial"
+description = "Premium templates, Brand Kit, background remover and more for 30 days. Cancel in Settings → Billing and keep Pro until the trial period ends."
+url = "https://www.canva.com/pro/"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-05: multiple guides; Canva help blocks automated checks, re-check by hand"

@@ -100,7 +100,6 @@ export function DealForm({
         >
           <option value="pure_freebie">Pure Freebie</option>
           <option value="free_trial">Instant-Cancel Trial</option>
-          <option value="free_with_purchase">Free With Purchase</option>
         </select>
       </div>
 

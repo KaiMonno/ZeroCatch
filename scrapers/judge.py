@@ -23,11 +23,13 @@ DEFAULT_LIFETIME_DAYS = 7  # blog deals without a stated end date are short-live
 RULES = """You screen deal posts for ZeroCatch, a site that lists only good-faith freebies.
 
 A post QUALIFIES only if it describes ONE specific offer from ONE brand that is:
-- completely free (category "pure_freebie"), or a clearly stated buy-one-get-one /
-  free-gift-with-purchase deal (category "free_with_purchase"), and
+- completely free, with no purchase of any kind, and
 - available to the general US public on the stated days.
 
 It does NOT qualify if ANY of these apply (use the matching rejection_reason):
+- requires_purchase: buy-one-get-one, free with purchase, minimum spend, or any purchase at all.
+- points_or_credit: the "free" thing is points, store credit, bonus cash, or a gift card.
+- free_shipping: the only free part is shipping, delivery, or returns.
 - paid_membership: requires a PAID membership or subscription (Amazon Prime, Target Circle 360,
   Walmart+, carrier perks like Verizon/T-Mobile, Costco, Sam's Club, DashPass, streaming services).
   Free loyalty programs and free apps are fine.
@@ -42,7 +44,7 @@ It does NOT qualify if ANY of these apply (use the matching rejection_reason):
 - unclear: you cannot tell what the offer or its terms are.
 
 Write title and description in your own words (never copy sentences). The description must
-state the exact terms: what is free, any account or app needed, and any purchase needed.
+state the exact terms: what is free and any account or app needed.
 Pick brand_link_index from the numbered links: the brand's OWN page for the offer. Use -1 if
 none of them is the brand's own page. Use confidence "high" only when the post states the
 terms plainly. Dates: starts_on/ends_on are the offer's US calendar days (YYYY-MM-DD), or ""
@@ -54,11 +56,10 @@ VERDICT_SCHEMA = {
         "qualifies": {"type": "boolean"},
         "rejection_reason": {
             "type": "string",
-            "enum": ["none", "paid_membership", "rebate", "limited_quantity", "in_store_event",
+            "enum": ["none", "requires_purchase", "points_or_credit", "free_shipping", "paid_membership", "rebate", "limited_quantity", "in_store_event",
                      "audience_only", "contest", "roundup", "not_free", "expired", "unclear"],
         },
         "confidence": {"type": "string", "enum": ["high", "medium", "low"]},
-        "category": {"type": "string", "enum": ["pure_freebie", "free_with_purchase"]},
         "is_food": {"type": "boolean"},
         "merchant": {"type": "string"},
         "title": {"type": "string"},
@@ -69,7 +70,7 @@ VERDICT_SCHEMA = {
         "starts_on": {"type": "string"},
         "ends_on": {"type": "string"},
     },
-    "required": ["qualifies", "rejection_reason", "confidence", "category", "is_food", "merchant", "title",
+    "required": ["qualifies", "rejection_reason", "confidence", "is_food", "merchant", "title",
                  "description", "brand_link_index", "requires_account", "requires_credit_card",
                  "starts_on", "ends_on"],
     "additionalProperties": False,
@@ -128,7 +129,7 @@ def verdict_to_deal(verdict: dict, links: list[tuple[str, str]], now: datetime) 
     index = verdict.get("brand_link_index", -1)
     if not isinstance(index, int) or not 0 <= index < len(links):
         return None, "ai: no brand link"
-    if verdict["category"] == "pure_freebie" and verdict.get("requires_credit_card"):
+    if verdict.get("requires_credit_card"):
         return None, "ai: card required on a freebie"
     if not verdict.get("title", "").strip() or not verdict.get("merchant", "").strip():
         return None, "ai: missing title or merchant"
@@ -144,7 +145,7 @@ def verdict_to_deal(verdict: dict, links: list[tuple[str, str]], now: datetime) 
     return {
         "title": verdict["title"].strip()[:200],
         "description": verdict["description"].strip(),
-        "category": verdict["category"],
+        "category": "pure_freebie",
         "merchant": verdict["merchant"].strip(),
         "url": links[index][0],
         "requires_account": bool(verdict.get("requires_account")),

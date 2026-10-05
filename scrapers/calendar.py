@@ -67,7 +67,9 @@ def upcoming_leads(events: list[dict], today: date, lead_days: int = LEAD_DAYS) 
                     "suggested_url": event["url"],
                     "suggested_starts_at": start.isoformat(),
                     "suggested_expires_at": end.isoformat(),
-                    "_description": event["description"],  # never stored on the lead
+                    # Never stored on the lead; used when the entry publishes directly.
+                    "_description": event["description"],
+                    "_requires_account": bool(event.get("requires_account", False)),
                 }
             )
     return leads
@@ -82,7 +84,7 @@ def lead_to_deal(lead: dict) -> dict:
         "category": "pure_freebie",
         "merchant": lead["suggested_merchant"],
         "url": lead["suggested_url"],
-        "requires_account": False,
+        "requires_account": lead["_requires_account"],
         "requires_credit_card": False,
         "instant_cancel_safe": False,
         "trial_duration_days": None,

@@ -1,13 +1,13 @@
-"""Steam free-to-keep promotions → review-queue leads.
+"""Steam free-to-keep promotions → published deals.
 
-Steam's search for "free + on special" finds 100%-off items, but many are DLC
-that only work with a paid base game: a catch a human must judge. Steam also
-doesn't expose the promo end date via API, so a reviewer adds it.
+Steam's search for "free + on special" finds 100%-off items. DLC is excluded:
+it only works with a base game you'd have to buy. Only items Steam's own API
+confirms as full games are published. Steam doesn't expose the promo end date,
+so the nightly sync unpublishes a game as soon as it drops out of the search.
 """
 
 import json
 import re
-from datetime import datetime, timezone
 from html import unescape
 
 from .fetch import fetch
@@ -22,6 +22,7 @@ _ROW_RE = re.compile(
     re.S,
 )
 MAX_ITEMS = 20  # keeps appdetails calls well under Steam's rate limits
+KEY_PREFIX = "steam:"
 
 
 def parse_search(results_html: str) -> list[tuple[str, str, str]]:
@@ -34,37 +35,35 @@ def parse_search(results_html: str) -> list[tuple[str, str, str]]:
     return rows
 
 
-def build_lead(appid: str, name: str, url: str, details: dict | None) -> dict:
-    is_dlc = bool(details and details.get("type") == "dlc")
-    base_game = ((details or {}).get("fullgame") or {}).get("name")
-    blurb = unescape((details or {}).get("short_description") or "").strip()
-    summary = f"DLC: requires {base_game or 'the base game'}. Check whether the base game is free. " if is_dlc else ""
-    summary += blurb[:300]
+def build_deal(appid: str, name: str, url: str, details: dict | None) -> dict | None:
+    """A publishable deal, or None for DLC, soundtracks, or anything unverified."""
+    if not details or details.get("type") != "game":
+        return None
     return {
-        "source": "steam",
-        # One lead per app: if the same app goes free again later, add it by hand.
-        "source_key": f"steam:{appid}",
-        "title": f"Free to keep on Steam: {name}"[:200],
-        "summary": summary + " Promo end date isn't in Steam's API, so check the store page.",
-        "source_url": url,
-        "source_categories": ["DLC" if is_dlc else "Game"],
-        "published_at": datetime.now(timezone.utc).isoformat(),  # no post date; use first seen
-        "is_food": False,
-        # DLC that needs a paid game is effectively "free with purchase".
-        "suggested_category": "free_with_purchase" if is_dlc else "pure_freebie",
-        "suggested_merchant": "Steam",
+        "source_key": f"{KEY_PREFIX}{appid}",
+        "title": f"{name}: Free to Keep on Steam"[:200],
+        "description": "Limited-time Steam promotion: add it to your library while it's free and it stays yours. Free Steam account needed; no payment method.",
+        "category": "pure_freebie",
+        "merchant": "Steam",
+        "url": url,
+        "requires_account": True,
+        "requires_credit_card": False,
+        "instant_cancel_safe": False,
+        "trial_duration_days": None,
+        "expires_at": None,
+        "is_hero_featured": False,
     }
 
 
-def fetch_steam_leads() -> list[dict]:
+def fetch_steam_deals() -> list[dict]:
     rows = parse_search(json.loads(fetch(SEARCH_URL))["results_html"])[:MAX_ITEMS]
-    leads = []
+    deals, skipped = [], 0
     for appid, name, url in rows:
-        try:
-            details = json.loads(fetch(DETAILS_URL.format(appid=appid))).get(appid, {}).get("data")
-        except Exception as err:  # details are a nice-to-have; still queue the lead
-            print(f"  steam: appdetails failed for {appid}: {err}")
-            details = None
-        leads.append(build_lead(appid, name, url, details))
-    print(f"  steam: {len(leads)} free-to-keep items")
-    return leads
+        # Errors propagate: a partial result would wrongly unpublish games.
+        details = json.loads(fetch(DETAILS_URL.format(appid=appid))).get(appid, {}).get("data")
+        if deal := build_deal(appid, name, url, details):
+            deals.append(deal)
+        else:
+            skipped += 1
+    print(f"  steam: {len(deals)} free-to-keep games ({skipped} DLC/other skipped)")
+    return deals

@@ -2,7 +2,7 @@ import "server-only";
 
 import type { DealCategory } from "./types";
 
-const CATEGORIES: DealCategory[] = ["pure_freebie", "free_trial", "free_with_purchase"];
+const CATEGORIES: DealCategory[] = ["pure_freebie", "free_trial"];
 
 // Postgres constraint name → reviewer-friendly message.
 const CONSTRAINT_MESSAGES: Record<string, string> = {
@@ -10,6 +10,7 @@ const CONSTRAINT_MESSAGES: Record<string, string> = {
   trial_has_duration: "Free trials need a duration in days.",
   expires_after_start: "The expiry date must be after the start date.",
   deals_url_check: "The deal link must start with https://",
+  no_purchase_required_deals: "Deals that need a purchase are no longer listed.",
 };
 
 export function friendlyDbError(message: string): string {
