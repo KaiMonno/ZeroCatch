@@ -100,6 +100,9 @@ def main() -> int:
             for lead in leads:
                 if v := lead.get("ai_verdict"):
                     print(f"  {'✓' if v.get('qualifies') else '✗'} {v.get('rejection_reason')}/{v.get('confidence')}  {lead['title'][:80]}")
+                    print(f"      decision={v.get('decision')}  link_index={v.get('brand_link_index')}  chosen={v.get('brand_url')}")
+                    for i, (url, anchor) in enumerate(lead["_links"][:8]):
+                        print(f"      [{i}] {url[:90]}  ({anchor[:40]})")
         print("\nLeads:")
         for row in leads:
             print(f"  {'🍔' if row['is_food'] else '  '} [{row['suggested_category']}] {row['title']}")
