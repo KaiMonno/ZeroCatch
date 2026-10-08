@@ -1,3 +1,5 @@
+import contextlib
+import io
 import os
 import unittest
 from datetime import datetime, timezone
@@ -47,7 +49,7 @@ class PostToLeadTest(unittest.TestCase):
 
 class FetchTest(unittest.TestCase):
     def test_not_configured_is_skipped(self):
-        with mock.patch.dict(os.environ, {}, clear=True):
+        with mock.patch.dict(os.environ, {}, clear=True), contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(instagram.fetch_instagram_leads(), [])
 
     def test_bad_handles_reported_and_others_continue(self):
@@ -57,7 +59,11 @@ class FetchTest(unittest.TestCase):
             return []
         env = {"INSTAGRAM_ACCESS_TOKEN": "t", "INSTAGRAM_USER_ID": "1"}
         report: list = []
-        with mock.patch.dict(os.environ, env), mock.patch.object(instagram, "fetch_brand_posts", side_effect=fake):
+        with (
+            mock.patch.dict(os.environ, env),
+            mock.patch.object(instagram, "fetch_brand_posts", side_effect=fake),
+            contextlib.redirect_stdout(io.StringIO()),  # the simulated failure would look like a real one in logs
+        ):
             self.assertEqual(instagram.fetch_instagram_leads(report=report), [])
         self.assertTrue(any(h == "dunkin" and s.startswith("ERROR") for h, s, _ in report))
 

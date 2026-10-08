@@ -158,8 +158,13 @@ def verdict_to_deal(verdict: dict, links: list[tuple[str, str]], now: datetime) 
     }, ""
 
 
+def _now() -> datetime:
+    """The current time; a separate function so tests can freeze the clock."""
+    return datetime.now(timezone.utc)
+
+
 def judge_lead(lead: dict, article_text: str, links: list[tuple[str, str]]) -> tuple[dict, dict | None, str]:
     """(verdict, deal-or-None, reason). Network/API errors propagate to the caller."""
     verdict = call_judge(build_prompt(lead, article_text, links))
-    deal, reason = verdict_to_deal(verdict, links, datetime.now(timezone.utc))
+    deal, reason = verdict_to_deal(verdict, links, _now())
     return verdict, deal, reason

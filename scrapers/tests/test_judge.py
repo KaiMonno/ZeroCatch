@@ -50,6 +50,13 @@ def lead(title="FREE Starbucks Coffee"):
 
 
 class ApplyJudgeTest(unittest.TestCase):
+    def setUp(self):
+        # Freeze the clock: GOOD's dates are fixed, so the real clock would
+        # eventually make every verdict "already ended".
+        patcher = mock.patch.object(judge, "_now", return_value=NOW)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_shadow_records_without_publishing(self):
         leads = [lead()]
         with mock.patch.object(judge, "call_judge", return_value=GOOD):

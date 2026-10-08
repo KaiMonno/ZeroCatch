@@ -37,8 +37,8 @@ jobs:
       - name: Install AI judge SDK
         run: pip install "anthropic>=1,<2"
 
-      - name: Unit tests
-        run: python -m unittest discover -s scrapers/tests -t .
+      # Unit tests run in CI (ci.yml) on every push, not here: a broken test
+      # should fail a pull request, never block a night of deals.
 
       - name: Scrape, judge and publish
         if: ${{ !inputs.judge_check && !inputs.instagram_check }}
