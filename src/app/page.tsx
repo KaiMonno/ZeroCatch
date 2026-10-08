@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { BadgeLegend } from "@/components/badge-legend";
 import { DealCard } from "@/components/deal-card";
+import { DealFolder } from "@/components/deal-folder";
 import { EmptyState } from "@/components/empty-state";
 import { FilterChips } from "@/components/filter-chips";
 import { HeroCard } from "@/components/hero-card";
 import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
-import { getDeals } from "@/lib/deals";
+import { ITCH_MERCHANT, getDeals } from "@/lib/deals";
 import { SITE_NAME } from "@/lib/site";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { TABS, buildHref, parseFilters, resolveTab } from "@/lib/tabs";
@@ -22,6 +23,8 @@ export async function generateMetadata({ searchParams }: PageProps<"/">): Promis
   return { ...canonical, title: `${tab.label} · ${SITE_NAME}`, description: tab.blurb };
 }
 
+const ITCH_FOLDER_MIN = 3;
+
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const tab = resolveTab(typeof sp.tab === "string" ? sp.tab : undefined);
@@ -32,7 +35,11 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   // The hero spotlight only exists on the home feed.
   const heroes = tab.category === "pure_freebie" ? deals.filter((d) => d.is_hero_featured) : [];
-  const rest = heroes.length ? deals.filter((d) => !d.is_hero_featured) : deals;
+  const listed = heroes.length ? deals.filter((d) => !d.is_hero_featured) : deals;
+  // Several itch.io giveaways collapse into one folder so they can't crowd the feed.
+  const itch = listed.filter((d) => d.merchant === ITCH_MERCHANT);
+  const folded = itch.length >= ITCH_FOLDER_MIN;
+  const rest = folded ? listed.filter((d) => d.merchant !== ITCH_MERCHANT) : listed;
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 pb-16 pt-4 sm:pt-8">
@@ -60,18 +67,24 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </div>
       )}
 
-      {rest.length > 0 ? (
+      {rest.length > 0 || folded ? (
         <section aria-label={`${tab.label} list`}>
           <p className="mb-3 text-xs text-muted" aria-live="polite">
             {deals.length} active deal{deals.length === 1 ? "" : "s"}
             {tab.category === "free_trial" && " · sorted longest to shortest"}
           </p>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* grid-cols-1 = minmax(0, 1fr): long one-line text can't widen the column past the screen */}
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rest.map((deal) => (
               <li key={deal.id} className="flex">
                 <DealCard deal={deal} />
               </li>
             ))}
+            {folded && (
+              <li className="min-w-0 sm:col-span-2 lg:col-span-3">
+                <DealFolder title="Free itch.io games" blurb="Indie games, free to keep" deals={itch} />
+              </li>
+            )}
           </ul>
         </section>
       ) : (

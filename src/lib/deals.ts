@@ -67,13 +67,18 @@ function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQuery): D
   });
 }
 
-/** Longest trial first, then featured, then soonest-expiring, then newest. */
+/** itch.io games are plentiful but small: they always sort after everything else. */
+export const ITCH_MERCHANT = "itch.io";
+const sourceRank = (d: Deal) => (d.merchant === ITCH_MERCHANT ? 1 : 0);
+
+/** Longest trial first, then featured, then non-itch, then soonest-expiring, then newest. */
 function sortDeals(deals: Deal[]): Deal[] {
   const exp = (d: Deal) => (d.expires_at ? Date.parse(d.expires_at) : Infinity);
   return [...deals].sort(
     (a, b) =>
       (b.trial_duration_days ?? -1) - (a.trial_duration_days ?? -1) ||
       Number(b.is_hero_featured) - Number(a.is_hero_featured) ||
+      sourceRank(a) - sourceRank(b) ||
       exp(a) - exp(b) ||
       Date.parse(b.created_at) - Date.parse(a.created_at),
   );
