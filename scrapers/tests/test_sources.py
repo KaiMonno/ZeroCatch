@@ -107,3 +107,45 @@ class GogTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class FetchRetryTest(unittest.TestCase):
+    def test_retries_transient_errors_then_succeeds(self):
+        import urllib.error
+        from unittest import mock
+
+        from scrapers import fetch as f
+
+        calls = []
+
+        class Resp:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+            def read(self):
+                return b"ok"
+
+        def flaky(request, timeout):
+            calls.append(1)
+            if len(calls) < 3:
+                raise urllib.error.URLError(TimeoutError("The read operation timed out"))
+            return Resp()
+
+        with mock.patch.object(f.urllib.request, "urlopen", side_effect=flaky), mock.patch.object(f.time, "sleep"):
+            self.assertEqual(f._get("https://example.com/feed"), b"ok")
+        self.assertEqual(len(calls), 3)
+
+    def test_permanent_errors_are_not_retried(self):
+        import urllib.error
+        from unittest import mock
+
+        from scrapers import fetch as f
+
+        err = urllib.error.HTTPError("https://example.com", 404, "Not Found", {}, None)
+        with mock.patch.object(f.urllib.request, "urlopen", side_effect=err) as opener, mock.patch.object(f.time, "sleep"):
+            with self.assertRaises(urllib.error.HTTPError):
+                f._get("https://example.com/missing")
+        self.assertEqual(opener.call_count, 1)

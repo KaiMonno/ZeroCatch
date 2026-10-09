@@ -18,14 +18,22 @@ from .rss import parse_rss
 from .sources import RSS_SOURCES
 
 
-def fetch_blog_leads(max_age_days: int, stats: Counter | None = None) -> list[dict]:
+def fetch_blog_leads(max_age_days: int, stats: Counter | None = None, warnings: list[str] | None = None) -> list[dict]:
     stats = stats if stats is not None else Counter()
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=max_age_days)
     rows: dict[str, dict] = {}
 
+    failed = 0
     for source in RSS_SOURCES:
-        items = parse_rss(fetch(source.url))
+        # Each feed is independent: one slow feed shouldn't drop the others.
+        try:
+            items = parse_rss(fetch(source.url))
+        except Exception as err:
+            failed += 1
+            if warnings is not None:
+                warnings.append(f"{source.url}: {err}")
+            continue
         blog_host = urlsplit(source.url).netloc.removeprefix("www.")
         for item in items:
             key = f"{source.name}:{item.stable_id}"
@@ -81,6 +89,8 @@ def fetch_blog_leads(max_age_days: int, stats: Counter | None = None) -> list[di
                 "_article_text": article_text(page),
                 "_links": [(u, a) for _, u, a in brand_links(page, blog_host)],
             }
+    if failed and failed == len(RSS_SOURCES):
+        raise RuntimeError(f"all {failed} feeds failed")
     return list(rows.values())
 
 

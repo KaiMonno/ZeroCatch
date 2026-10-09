@@ -25,11 +25,20 @@ from .epic import fetch_epic_deals
 from . import gog, instagram, itch, steam, trials
 
 
-def _run(name: str, collector: Callable[[], object], errors: list[str], default: object) -> object:
+_attempted: list[str] = []
+_failed: list[str] = []
+
+
+def _run(name: str, collector: Callable[[], object], warnings: list[str], default: object) -> object:
+    """Run one source. A source that can't be reached (after retries) is a warning,
+    not a failure: tomorrow's run will catch up, and synced sources keep what's
+    published when their fetch fails."""
+    _attempted.append(name)
     try:
         return collector()
-    except Exception as err:  # one broken source shouldn't sink the run
-        errors.append(f"{name}: {err}")
+    except Exception as err:
+        _failed.append(name)
+        warnings.append(f"{name}: {err}")
         return default
 
 
@@ -72,24 +81,25 @@ def main() -> int:
     parser.add_argument("--max-age-days", type=int, default=7, help="skip older blog posts (default 7)")
     args = parser.parse_args()
 
-    errors: list[str] = []
+    errors: list[str] = []  # writes that failed: the run fails and GitHub emails you
+    warnings: list[str] = []  # sources that couldn't be reached: logged as annotations
     blog_stats: Counter = Counter()
     print("Collecting:")
-    calendar_deals, calendar_leads = _run("calendar", fetch_calendar, errors, ([], []))
+    calendar_deals, calendar_leads = _run("calendar", fetch_calendar, warnings, ([], []))
     leads = [
-        *_run("blogs", lambda: fetch_blog_leads(args.max_age_days, blog_stats), errors, []),
+        *_run("blogs", lambda: fetch_blog_leads(args.max_age_days, blog_stats, warnings), warnings, []),
         *calendar_leads,
-        *_run("instagram", instagram.fetch_instagram_leads, errors, []),
+        *_run("instagram", instagram.fetch_instagram_leads, warnings, []),
     ]
     print(format_stats(blog_stats))
-    epic_deals = _run("epic", fetch_epic_deals, errors, [])
+    epic_deals = _run("epic", fetch_epic_deals, warnings, [])
     # Synced sources: whatever the source lists now is published, and anything
     # it stopped listing is unpublished. None means "fetch failed: don't sync".
     synced = {
-        "steam": (steam.KEY_PREFIX, _run("steam", steam.fetch_steam_deals, errors, None)),
-        "gog": (gog.KEY_PREFIX, _run("gog", gog.fetch_gog_deals, errors, None)),
-        "itch": (itch.KEY_PREFIX, _run("itch", itch.fetch_itch_deals, errors, None)),
-        "trials": (trials.KEY_PREFIX, _run("trials", trials.fetch_trial_deals, errors, None)),
+        "steam": (steam.KEY_PREFIX, _run("steam", steam.fetch_steam_deals, warnings, None)),
+        "gog": (gog.KEY_PREFIX, _run("gog", gog.fetch_gog_deals, warnings, None)),
+        "itch": (itch.KEY_PREFIX, _run("itch", itch.fetch_itch_deals, warnings, None)),
+        "trials": (trials.KEY_PREFIX, _run("trials", trials.fetch_trial_deals, warnings, None)),
     }
     mode = judge.judge_mode()
 
@@ -157,11 +167,14 @@ def main() -> int:
         except supabase_rest.SupabaseError as err:
             errors.append(f"housekeeping: {err}")
 
+    # ::warning:: shows as an annotation on the run without failing it.
+    for warning in warnings:
+        print(f"::warning title=Source unavailable::{warning}")
     for error in errors:
-        print(f"ERROR {error}", file=sys.stderr)
-    # Any error fails the workflow, so GitHub emails you. Good data from the
-    # healthy sources is still written first.
-    return 1 if errors else 0
+        print(f"::error::{error}")
+    # Fail (and get emailed) for broken writes, or when nothing could be fetched at all.
+    every_source_failed = bool(_attempted) and len(_failed) == len(_attempted)
+    return 1 if errors or every_source_failed else 0
 
 
 if __name__ == "__main__":
