@@ -7,7 +7,7 @@
 # - Spotify Premium: spotify.com/us/legal/premium-promotional-offer-terms (2026-10-04)
 # - LinkedIn Premium: linkedin.com/help/linkedin/answer/a545578 (2026-10-05)
 # - Walmart+: Walmart+ terms, "free-trial cancellations end access immediately" (2026-10-05)
-# Pending: Audible (sources conflict; official help page needs sign-in).
+# Removed: Hulu (no longer offers a free trial, 2026-10-12).
 
 [[trial]]
 key = "amazon-prime"
@@ -60,16 +60,6 @@ requires_credit_card = true
 verified = "2026-10-05: multiple guides; same Amazon policy as Kindle Unlimited (active until next billing date)"
 
 [[trial]]
-key = "hulu"
-merchant = "Hulu"
-title = "Hulu (With Ads): 30-Day Free Trial"
-description = "Stream Hulu's library for 30 days (new subscribers, With Ads plan). Cancel in Account settings and keep watching until the end of the trial."
-url = "https://www.hulu.com/welcome"
-duration_days = 30
-requires_credit_card = true
-verified = "2026-10-05: multiple guides; Hulu help page is JS-rendered, re-check by hand"
-
-[[trial]]
 key = "canva-pro"
 merchant = "Canva"
 title = "Canva Pro: 30-Day Free Trial"
@@ -77,4 +67,14 @@ description = "Premium templates, Brand Kit, background remover and more for 30 
 url = "https://www.canva.com/pro/"
 duration_days = 30
 requires_credit_card = true
-verified = "2026-10-05: multiple guides; Canva help blocks automated checks, re-check by hand"
+verified = "2026-10-12: confirmed by hand (cancel keeps Pro until the trial ends)"
+
+[[trial]]
+key = "audible"
+merchant = "Audible"
+title = "Audible Premium Plus: 30-Day Free Trial"
+description = "A month of Audible Premium Plus with a credit for any audiobook, which is yours to keep, plus the Plus catalog. Card required at signup. Cancel right away and keep access until the trial ends."
+url = "https://www.audible.com/ep/free-trial"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-12: confirmed by hand (cancel keeps the trial until it ends)"

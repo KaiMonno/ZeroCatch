@@ -48,7 +48,7 @@ The public rules are on the site at `/what-qualifies`. A deal is listed only if 
 ## Lead pipeline: mostly hands-off
 
 ```
-GitHub Actions (nightly, 12:05am PT) ─▶ scrapers/
+Vercel Cron (~midnight PT) ─▶ GitHub Actions ─▶ scrapers/
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
   │    Epic · Steam (no DLC) · GOG · itch.io · trials.toml · fixed-date calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
@@ -75,6 +75,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 - **Scrapers:** `python -m scrapers` (`--dry-run` to preview; `--dry-run --judge` also calls the AI). Robots.txt is honored on every fetch.
 - **Instagram:** `python -m scrapers.instagram --check` reports, for each brand in `scrapers/data/instagram_brands.toml`, whether the account was found and which recent posts look like freebies. Needs `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_USER_ID` (Meta Graph API business discovery, Standard Access, no App Review).
 - **Manual workflow options:** Actions → Scrape leads → Run workflow → `judge_check` (AI verdicts on current leads) or `instagram_check` (Instagram report). Neither writes anything.
+- **Scheduling:** Vercel Cron (`vercel.json`, free plan: within the hour) calls `/api/cron/scrape`, which starts the scrape workflow through GitHub's API. GitHub's own `schedule` stays as a backup, since it can run hours late. Needs `CRON_SECRET` and `GITHUB_DISPATCH_TOKEN` in Vercel.
 - **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads pending for 14 days, deletes deals expired over 90 days ago, prunes login-failure records.
 - **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
 - **Tests:** `python -m unittest discover -s scrapers/tests -t .`

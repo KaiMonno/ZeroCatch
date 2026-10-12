@@ -2,8 +2,9 @@ name: Scrape leads
 
 on:
   schedule:
-    # 08:05 UTC = 12:05am PST / 1:05am PDT. The :05 offset dodges the
-    # top-of-hour congestion that delays GitHub's scheduler.
+    # Backup only. The primary trigger is Vercel Cron (vercel.json), which
+    # dispatches this workflow within the hour; GitHub's scheduler has run
+    # this 6-9 hours late. Runs are idempotent, so two runs a day are harmless.
     - cron: "5 8 * * *"
   workflow_dispatch: # "Run workflow" button for manual runs
     inputs:
