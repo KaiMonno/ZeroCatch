@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Suspense } from "react";
 import { BadgeLegend } from "@/components/badge-legend";
 import { DealCard } from "@/components/deal-card";
@@ -8,6 +9,7 @@ import { FilterChips } from "@/components/filter-chips";
 import { HeroCard } from "@/components/hero-card";
 import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
+import { getViewer } from "@/lib/claims";
 import { ITCH_MERCHANT, getDeals } from "@/lib/deals";
 import { SITE_NAME } from "@/lib/site";
 import { isSupabaseConfigured } from "@/lib/supabase";
@@ -30,8 +32,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const tab = resolveTab(typeof sp.tab === "string" ? sp.tab : undefined);
   const q = typeof sp.q === "string" ? sp.q.trim() : undefined;
   const filters = parseFilters(sp.f);
+  const showClaimed = sp.claimed === "show";
 
-  const deals = await getDeals({ category: tab.category, q, filters });
+  // The deal list is a shared cache; each visitor's claims are applied on top.
+  const [matching, { claimed }] = await Promise.all([getDeals({ category: tab.category, q, filters }), getViewer()]);
+  const claimedHere = matching.filter((d) => claimed.has(d.id)).length;
+  const deals = showClaimed ? matching : matching.filter((d) => !claimed.has(d.id));
 
   // The hero spotlight only exists on the home feed.
   const heroes = tab.category === "pure_freebie" ? deals.filter((d) => d.is_hero_featured) : [];
@@ -62,7 +68,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         // Epic often gives away two games at once: pair them on wider screens.
         <div className={`grid gap-3 ${heroes.length > 1 ? "lg:grid-cols-2" : ""}`}>
           {heroes.map((deal) => (
-            <HeroCard key={deal.id} deal={deal} />
+            <HeroCard key={deal.id} deal={deal} claimed={claimed.has(deal.id)} />
           ))}
         </div>
       )}
@@ -72,17 +78,29 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <p className="mb-3 text-xs text-muted" aria-live="polite">
             {deals.length} active deal{deals.length === 1 ? "" : "s"}
             {tab.category === "free_trial" && " · sorted longest to shortest"}
+            {claimedHere > 0 && (
+              <>
+                {" · "}
+                <Link
+                  href={buildHref({ tab: tab.slug, q, filters, showClaimed: !showClaimed })}
+                  scroll={false}
+                  className="text-fg underline-offset-4 hover:underline"
+                >
+                  {showClaimed ? `Hide ${claimedHere} claimed` : `Show ${claimedHere} claimed`}
+                </Link>
+              </>
+            )}
           </p>
           {/* grid-cols-1 = minmax(0, 1fr): long one-line text can't widen the column past the screen */}
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {rest.map((deal) => (
               <li key={deal.id} className="flex">
-                <DealCard deal={deal} />
+                <DealCard deal={deal} claimed={claimed.has(deal.id)} />
               </li>
             ))}
             {folded && (
               <li className="min-w-0 sm:col-span-2 lg:col-span-3">
-                <DealFolder title="Free itch.io games" blurb="Indie games, free to keep" deals={itch} />
+                <DealFolder title="Free itch.io games" blurb="Indie games, free to keep" deals={itch} claimed={claimed} />
               </li>
             )}
           </ul>

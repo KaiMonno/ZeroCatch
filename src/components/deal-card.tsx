@@ -3,9 +3,10 @@ import { formatDuration } from "@/lib/format";
 import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
+import { ClaimButton } from "./claim-button";
 import { ReportDeal } from "./report-deal";
 
-export function DealCard({ deal }: { deal: Deal }) {
+export function DealCard({ deal, claimed = false }: { deal: Deal; claimed?: boolean }) {
   return (
     <article className="group relative flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-line-strong has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-400">
       <div className="flex items-start justify-between gap-3">
@@ -40,8 +41,9 @@ export function DealCard({ deal }: { deal: Deal }) {
         <DealBadges deal={deal} />
         <div className="flex flex-wrap items-center justify-between gap-2">
           <ExpiryLabel expiresAt={deal.expires_at} />
-          <ReportDeal dealId={deal.id} dealTitle={deal.title} />
+          <ClaimButton dealId={deal.id} dealTitle={deal.title} claimed={claimed} />
         </div>
+        <ReportDeal dealId={deal.id} dealTitle={deal.title} />
       </div>
     </article>
   );

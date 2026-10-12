@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
+import { UserMenu } from "@/components/user-menu";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
@@ -38,7 +40,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </span>
             ZeroCatch
           </Link>
-          <span className="text-xs text-muted">No traps. No affiliate junk.</span>
+          <div className="flex items-center gap-3">
+            <span className="hidden text-xs text-muted sm:inline">No traps. No affiliate junk.</span>
+            {/* Reads the session cookie, so it streams in after the static header. */}
+            <Suspense fallback={<span className="h-8 w-16" aria-hidden />}>
+              <UserMenu />
+            </Suspense>
+          </div>
         </header>
         {children}
         <footer className="mx-auto flex w-full max-w-5xl flex-wrap gap-x-3 gap-y-1 px-4 pb-8 text-xs text-muted">

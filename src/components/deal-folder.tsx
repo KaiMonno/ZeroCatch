@@ -8,7 +8,17 @@ import { ExpiryLabel } from "./expiry-label";
  * one card so they don't crowd out everything else. A native <details>
  * element: works without JavaScript and is keyboard/screen-reader friendly.
  */
-export function DealFolder({ title, blurb, deals }: { title: string; blurb: string; deals: Deal[] }) {
+export function DealFolder({
+  title,
+  blurb,
+  deals,
+  claimed,
+}: {
+  title: string;
+  blurb: string;
+  deals: Deal[];
+  claimed: Set<string>;
+}) {
   const soonest = deals.reduce<string | null>(
     (min, d) => (d.expires_at && (!min || d.expires_at < min) ? d.expires_at : min),
     null,
@@ -49,7 +59,7 @@ export function DealFolder({ title, blurb, deals }: { title: string; blurb: stri
       <ul className="grid grid-cols-1 gap-3 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
         {deals.map((deal) => (
           <li key={deal.id} className="flex">
-            <DealCard deal={deal} />
+            <DealCard deal={deal} claimed={claimed.has(deal.id)} />
           </li>
         ))}
       </ul>

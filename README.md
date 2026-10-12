@@ -113,16 +113,21 @@ GitHub Actions cron runs in UTC.
 
 Deals appear and disappear on time no matter how often scrapers run, because `active_deals` filters on `starts_at` and `expires_at` at query time. That's why Epic needs no Thursday run: next week's games are already stored with their start time. The schedule only controls how quickly brand-new deals are discovered.
 
-### Phase 3: accounts and "Mark as claimed"
+### Accounts and "Mark as claimed" (built)
 
-Signed-in users can mark a deal as claimed, and it disappears from their feed.
+- **Sign in with Google** (Supabase Auth via `@supabase/ssr`): `src/proxy.ts` refreshes the session on each request, and server code checks it with `getClaims()`. `/login` starts the OAuth flow, and `/auth/callback` exchanges the code (redirects are limited to same-site paths).
+- **Claims:** "Mark claimed" on any deal hides it from that visitor's feed, and "Show N claimed" brings it back with Undo. The deal list stays one shared cache, and each visitor's claims are filtered on top of it per request.
+- **Guests:** claims are kept in an httpOnly cookie (up to 80) that the server reads, so there's no flicker on first render. On sign-in they merge into the account and the cookie is cleared.
+- **Database:** `deal_claims` has RLS so users can only read and change their own rows. `my_active_deals` hides the caller's claims, ready for the Expo app.
+- **Next:** email alerts for new deals. That needs a custom domain and an email provider such as Resend, which also unlocks magic-link sign-in.
 
-- **Auth:** Supabase Auth with magic link plus Google/Apple sign-in, all on the free tier.
-- **Table:** `deal_claims (user_id → auth.users, deal_id → deals ON DELETE CASCADE, claimed_at, PRIMARY KEY (user_id, deal_id))`. RLS limits each user to reading and writing their own rows.
-- **Feed:** a `security_invoker` view adds `NOT EXISTS (… c.user_id = auth.uid())` on top of `active_deals`. Logged-out users get `auth.uid()` = null and see everything, so one view serves both cases, and the Expo app gets the feature at no extra cost.
-- **UX:** a "Claimed ✓" button on each card with an undo toast, plus a "Show claimed" toggle.
-- **Recurring deals:** claims are tied to the deal row, so claiming this week's Epic game doesn't hide next week's.
-- **Optional guest mode:** keep claims in `localStorage` and merge them into the account on sign-up.
+### Local development with Supabase
+
+`npx supabase start` runs Postgres, Auth and the REST API in Docker and applies `supabase/migrations/`. Then:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 NEXT_PUBLIC_SUPABASE_ANON_KEY=<publishable key from `npx supabase status`> npm run dev
+```
 
 ## Phase 2: Expo app
 

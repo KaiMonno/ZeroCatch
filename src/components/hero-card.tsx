@@ -2,9 +2,10 @@ import { ExternalLink, Sparkles } from "lucide-react";
 import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
+import { ClaimButton } from "./claim-button";
 import { ReportDeal } from "./report-deal";
 
-export function HeroCard({ deal }: { deal: Deal }) {
+export function HeroCard({ deal, claimed = false }: { deal: Deal; claimed?: boolean }) {
   return (
     <section
       aria-labelledby={`hero-${deal.id}`}
@@ -38,6 +39,7 @@ export function HeroCard({ deal }: { deal: Deal }) {
           <ExternalLink aria-hidden className="size-4" />
         </a>
         <ExpiryLabel expiresAt={deal.expires_at} />
+        <ClaimButton dealId={deal.id} dealTitle={deal.title} claimed={claimed} />
       </div>
       <div className="mt-4">
         <ReportDeal dealId={deal.id} dealTitle={deal.title} />
