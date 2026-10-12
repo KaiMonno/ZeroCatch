@@ -19,6 +19,10 @@ class KeepTest(unittest.TestCase):
         self.assertFalse(c("Men's Wrinkle-Free Golf Pants Just $14.99").keep)
         self.assertFalse(c("75% Off Free People Sale").keep)
         self.assertFalse(c("Doughnuts are living in my head rent free 🍩").keep)
+        for idiom in ("Free will exists and yet you skip the horsey sauce?", "Feel free to tag a friend",
+                      "Spend your free time with us", "Break free from boring lunches"):
+            self.assertFalse(c(idiom).keep, idiom)
+        self.assertTrue(c("FREE fries for everyone this Friday, no purchase needed").keep)
         self.assertFalse(c("Up to 40% Off Hair Care + Free Same-Day Delivery").keep)
         self.assertFalse(c("$5 Off Pizza + Free Curbside Pickup").keep)
 
