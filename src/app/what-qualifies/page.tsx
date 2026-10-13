@@ -105,9 +105,10 @@ export default function WhatQualifiesPage() {
           Where deals come from
         </h2>
         <p className="text-sm leading-relaxed text-muted">
-          Straight from the source wherever possible: store feeds like Epic Games, Steam and GOG, brands&apos; own press
-          releases, and hand-checked lists of trials and yearly food freebies. Everything is re-checked every night, and
-          deals disappear the moment they end.
+          Straight from the source wherever possible: store feeds like Epic Games, Steam, GOG and itch.io, brands&apos; own
+          press releases, and hand-checked lists of trials and yearly freebies. A couple of freebie blogs that allow it
+          are used only as tips: an AI check holds each one to the rules above, and the deal always links to the brand,
+          never the blog. Everything is re-checked every night, and deals disappear the moment they end.
         </p>
       </section>
 

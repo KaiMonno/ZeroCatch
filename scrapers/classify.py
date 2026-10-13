@@ -39,7 +39,7 @@ REJECT_RULES: list[tuple[str, re.Pattern[str]]] = [
     ("requires_purchase", _PURCHASE_RE),
     ("rebate", re.compile(
         r"after (easy )?(online )?(rebate|cash ?back|\w+ cash|\w+ rewards)|better than free|\bibotta\b|"
-        r"fetch rewards|money ?back|cash back", re.I)),
+        r"fetch rewards|money ?back|cash back|\{aisle\}|\baisle app\b|via aisle|with aisle", re.I)),
     # Money-adjacent "freebies": points, store credit, gift cards, bonus bucks.
     ("points_or_credit", re.compile(
         r"\bpoints?\b|\bcredits?\b|store credit|gift cards?|e-?gift|\bbonus bucks\b|extrabucks|"
@@ -52,7 +52,8 @@ REJECT_RULES: list[tuple[str, re.Pattern[str]]] = [
         r"\bwin\b|\bwinners?\b|sweepstakes|\bgiveaway\b|enter (to|for)|instant win|chance to", re.I)),
     ("limited_quantity", re.compile(
         r"first \d[\d,]*|while supplies|limited (quantit|supply)|will (sell|go) (out|quickly)|"
-        r"sell out|\d{1,3}(,\d{3})+ (free|available)|only \d[\d,]* available|first come", re.I)),
+        r"sell out|\d{1,3}(,\d{3})+ (free|available|get|people|customers|lucky|winners|will)\b|^\d{1,3}(,\d{3})+ |"
+        r"only \d[\d,]* available|first come", re.I)),
     ("in_store_event", re.compile(
         r"\bevents?\b|workshop|in-store|\bclass(es)?\b|photos? with|(pet|santa|bunny|holiday|halloween) photos?|from \d{1,2}(:\d\d)? ?(am|pm)?\s*[-–]\s*\d|"
         r"\b\d{1,2}(:\d\d)? ?(am|pm)\b", re.I)),

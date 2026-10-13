@@ -2,7 +2,7 @@ import unittest
 from datetime import date, datetime, timezone
 
 from scrapers.dates import day_window, find_deal_day
-from scrapers.links import pick_brand_link
+from scrapers.links import host_matches_title, pick_brand_link
 
 PUB = datetime(2026, 10, 3, 14, 0, tzinfo=timezone.utc)
 
@@ -48,6 +48,9 @@ ARTICLE = """
   <a href="https://on.ltk.com/+abc">Target Circle</a>
   <a href="https://www.amazon.com/dp/B0?tag=wwwhip2saveco-20">Amazon</a>
   <a href="https://www.tiktok.com/@hip2save">TikTok</a>
+  <a href="https://www.addtoany.com/add_to/facebook?linkurl=x">Share</a>
+  <a href="https://t.me/freestufffinder">Telegram</a>
+  <a href="https://mavely.app.link/abc">Shop</a>
   <a href="https://www.prnewswire.com/news-releases/x.html">Press release</a>
   <a href="https://www.target.com/circle?utm_source=hip2save&amp;utm_medium=x">Target</a>
   <a href="https://www.starbucks.com/rewards?utm_campaign=x">Starbucks <b>Rewards</b></a>
@@ -55,7 +58,35 @@ ARTICLE = """
 """
 
 
+class HostMatchesTitleTest(unittest.TestCase):
+    def test_brand_domains_match(self):
+        cases = {
+            "www.neutrogena.com": "FREE Neutrogena Collagen Bank Moisturizer Sample",
+            "www.coca-cola.com": "FREE 20 oz. Coca Cola",
+            "ewtnmission.com": "FREE 2027 EWTN Calendar",
+            "daveshotchicken.com": "Get FREE Sliders at Dave's Hot Chicken today",
+            "www.americanchestnut.org": "Get a FREE American Chestnut tree seed!",
+        }
+        for host, title in cases.items():
+            self.assertTrue(host_matches_title(host, title), host)
+
+    def test_ads_trackers_and_social_do_not_match(self):
+        cases = {
+            "bambuslicer.net": "FREE Photo Prints from Walgreens",
+            "vizervelocity.com": "FREE Mezcla Bar Product",
+            "www.snapchat.com": "FREE Slider at Dave's Hot Chicken!",
+            "discover.gotoaisle.com": "FREE Unreal Chocolate at Walmart",
+        }
+        for host, title in cases.items():
+            self.assertFalse(host_matches_title(host, title), host)
+
+
 class PickBrandLinkTest(unittest.TestCase):
+    def test_strict_mode_needs_a_title_match(self):
+        page = '<article><a href="https://bambuslicer.net/x">ad</a><a href="https://www.walgreens.com/photo">W</a></article>'
+        self.assertEqual(pick_brand_link(page, "blog.com", None, title="FREE Photo Prints from Walgreens")[0], "https://www.walgreens.com/photo")
+        self.assertIsNone(pick_brand_link('<article><a href="https://bambuslicer.net/x">ad</a></article>', "blog.com", None, title="FREE Prints"))
+
     def test_prefers_merchant_domain_and_strips_tracking(self):
         self.assertEqual(
             pick_brand_link(ARTICLE, "hip2save.com", "starbucks.com"),

@@ -81,6 +81,7 @@ class InclusionRulesTest(unittest.TestCase):
         self.assertRejected("FREE Cereal After Rebate", "rebate")
         self.assertRejected("FREE Ice Cream After Walmart Cash", "rebate")
         self.assertRejected("TWO Better Than FREE Toothbrushes", "rebate")
+        self.assertRejected("FREE Unreal Chocolate at Walmart (reg. $5.42)! {Aisle}", "rebate")
 
     def test_contests(self):
         self.assertRejected("Chipotle IQ Test = Win FREE Burritos for a Year", "contest")
@@ -88,6 +89,7 @@ class InclusionRulesTest(unittest.TestCase):
     def test_limited_quantity(self):
         self.assertRejected("FREE Frozen Yogurt for the First 50 Customers", "limited_quantity")
         self.assertRejected("FREE Ice Cream Coupon for First 20,000", "limited_quantity")
+        self.assertRejected("8,000 Get a FREE Chipotle Big Bag", "limited_quantity")
 
     def test_in_store_events(self):
         self.assertRejected("FREE Home Depot Kids Workshop on 9/5", "in_store_event")

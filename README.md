@@ -66,6 +66,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | GOG giveaway | Auto-published; unpublished the night the homepage banner is gone |
 | itch.io sale feed | 100%-off games with an original price of at least $3.99 auto-publish, using the feed's exact `saleends` date |
 | PR Newswire, Instagram brand accounts | Inclusion rules, then the AI judge (or the review queue while the judge is off) |
+| I Crave Freebies, Money Saving Mom | Feeds (robots.txt and terms permit it) → rules → strict brand-link match → AI judge → auto-publish |
 | Hip2Save | Paused: ~1% of posts qualified |
 
 **AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (default) records verdicts on the queue for comparison, and `publish` acts on them. Without an `ANTHROPIC_API_KEY` secret the judge is off. Expected cost at ~6 new leads/day is about $14/year.
