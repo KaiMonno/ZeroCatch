@@ -37,11 +37,16 @@ def _post(path: str, body: object, prefer: str | None = None) -> object:
         raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
 
 
-def _uniform(rows: list[dict]) -> list[dict]:
-    """PostgREST bulk inserts need identical keys in every row. Keys starting
-    with "_" are in-memory context (e.g. article text) and are never stored."""
-    keys = {k for row in rows for k in row if not k.startswith("_")}
-    return [{k: row.get(k) for k in keys} for row in rows]
+def _batches(rows: list[dict]) -> list[list[dict]]:
+    """Group rows by their set of keys. PostgREST bulk inserts need identical
+    keys in every row, and padding a missing key with null would override the
+    column's default (e.g. status = 'pending') instead of using it. Keys
+    starting with "_" are in-memory context (article text) and never stored."""
+    groups: dict[frozenset, list[dict]] = {}
+    for row in rows:
+        clean = {k: v for k, v in row.items() if not k.startswith("_")}
+        groups.setdefault(frozenset(clean), []).append(clean)
+    return list(groups.values())
 
 
 def _get(path: str) -> object:
@@ -81,12 +86,14 @@ def insert_new_candidates(rows: list[dict]) -> list[dict]:
     id and source_key."""
     if not rows:
         return []
-    added = _post(
-        "deal_candidates?on_conflict=source_key&select=id,source_key",
-        _uniform(rows),
-        prefer="resolution=ignore-duplicates,return=representation",
-    )
-    return added or []
+    added: list[dict] = []
+    for batch in _batches(rows):
+        added += _post(
+            "deal_candidates?on_conflict=source_key&select=id,source_key",
+            batch,
+            prefer="resolution=ignore-duplicates,return=representation",
+        ) or []
+    return added
 
 
 def upsert_deals(rows: list[dict]) -> int:

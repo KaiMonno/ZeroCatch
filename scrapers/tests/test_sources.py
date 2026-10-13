@@ -149,3 +149,18 @@ class FetchRetryTest(unittest.TestCase):
             with self.assertRaises(urllib.error.HTTPError):
                 f._get("https://example.com/missing")
         self.assertEqual(opener.call_count, 1)
+
+
+class BatchesTest(unittest.TestCase):
+    def test_mixed_rows_keep_column_defaults(self):
+        from scrapers.supabase_rest import _batches
+
+        accepted = {"source_key": "a", "title": "A", "_article_text": "x"}
+        rejected = {"source_key": "b", "title": "B", "status": "rejected", "review_note": "ai: contest"}
+        batches = _batches([accepted, rejected])
+        self.assertEqual(len(batches), 2)
+        # No row gets a null "status" that would override the database default.
+        for batch in batches:
+            for row in batch:
+                self.assertNotIn(None, row.values())
+                self.assertFalse(any(k.startswith("_") for k in row))
