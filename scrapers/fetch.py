@@ -4,9 +4,10 @@ import socket
 import time
 import urllib.error
 import urllib.request
-import urllib.robotparser
 from functools import cache
 from urllib.parse import urlsplit
+
+from .robots import ALLOW_ALL, DISALLOW_ALL, Robots
 
 USER_AGENT = "ZeroCatchBot/0.1 (+https://github.com/KaiMonno/zerocatch)"
 TIMEOUT_S = 20
@@ -39,15 +40,13 @@ def _get(url: str) -> bytes:
 
 
 @cache
-def _robots_for(origin: str) -> urllib.robotparser.RobotFileParser:
-    parser = urllib.robotparser.RobotFileParser()
+def _robots_for(origin: str) -> Robots:
     try:
-        parser.parse(_get(f"{origin}/robots.txt").decode("utf-8", "replace").splitlines())
+        return Robots.parse(_get(f"{origin}/robots.txt").decode("utf-8", "replace"))
     except urllib.error.HTTPError as err:
         # Per RFC 9309: a missing robots.txt (4xx) allows everything; a server
         # error (5xx) means we must assume everything is disallowed.
-        parser.parse([] if 400 <= err.code < 500 else ["User-agent: *", "Disallow: /"])
-    return parser
+        return ALLOW_ALL if 400 <= err.code < 500 else DISALLOW_ALL
 
 
 def fetch(url: str) -> bytes:
