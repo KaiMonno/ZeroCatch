@@ -122,7 +122,12 @@ Deals appear and disappear on time no matter how often scrapers run, because `ac
 - **Claims:** "Mark claimed" on any deal hides it from that visitor's feed, and "Show N claimed" brings it back with Undo. The deal list stays one shared cache, and each visitor's claims are filtered on top of it per request.
 - **Guests:** claims are kept in an httpOnly cookie (up to 80) that the server reads, so there's no flicker on first render. On sign-in they merge into the account and the cookie is cleared.
 - **Database:** `deal_claims` has RLS so users can only read and change their own rows. `my_active_deals` hides the caller's claims, ready for the Expo app.
-- **Next:** email alerts for new deals. That needs a custom domain and an email provider such as Resend, which also unlocks magic-link sign-in.
+### Deal-alert emails (built)
+
+- **Opt in on `/account`:** topics (Games, Food, Trials, Other freebies) and frequency (daily when something new matches, or weekly on Mondays). Only signed-in users with a verified email can subscribe. A database trigger always sets the address from the user's own account, and column-level grants stop users from writing `email` or `last_sent_at`.
+- **Sending** (`python -m scrapers.alerts`, after each nightly scrape) uses Resend's batch API from `alerts@zerocatch.dev`. A deal counts as new once it's visible, claimed deals are skipped, each subscriber gets at most one email per period, and every batch carries an `Idempotency-Key`. It's capped at 90 emails a run (Resend's free tier allows 100/day).
+- **Unsubscribe:** HMAC-signed links, plus RFC 8058 one-click `List-Unsubscribe` headers that mail apps POST to `/api/alerts/unsubscribe`. Links in the email go to `/unsubscribe`, which asks before acting so link scanners can't unsubscribe anyone.
+- Needs `RESEND_API_KEY` (GitHub) and the same `ALERTS_SIGNING_SECRET` in GitHub and Vercel; the send step skips quietly without them.
 
 ### Local development with Supabase
 

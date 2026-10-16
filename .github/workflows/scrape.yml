@@ -55,6 +55,17 @@ jobs:
           INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
           INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
 
+      - name: Send deal alerts
+        # Runs even if a source failed: whatever was published is already saved.
+        if: ${{ !cancelled() && !inputs.judge_check && !inputs.instagram_check }}
+        run: python -m scrapers.alerts
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          # Without these two secrets the step skips quietly.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ALERTS_SIGNING_SECRET: ${{ secrets.ALERTS_SIGNING_SECRET }}
+
       - name: Judge check (dry run, nothing written)
         if: ${{ inputs.judge_check }}
         run: python -m scrapers --dry-run --judge

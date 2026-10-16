@@ -59,6 +59,34 @@ def _get(path: str) -> object:
         raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
 
 
+def get_rows(path: str) -> list[dict]:
+    return _get(path) or []
+
+
+def get_in(path: str, column: str, values: list[str], chunk: int = 50) -> list[dict]:
+    """GET with `column=in.(...)`, chunked to keep URLs short."""
+    rows: list[dict] = []
+    for i in range(0, len(values), chunk):
+        listed = urllib.parse.quote(",".join(f'"{v}"' for v in values[i : i + chunk]))
+        rows += _get(f"{path}&{column}=in.({listed})") or []
+    return rows
+
+
+def patch_rows(path: str, body: dict) -> None:
+    url = os.environ["SUPABASE_URL"].rstrip("/")
+    request = urllib.request.Request(
+        f"{url}/rest/v1/{path}",
+        data=json.dumps(body).encode(),
+        method="PATCH",
+        headers={**_headers(os.environ["SUPABASE_SERVICE_ROLE_KEY"]), "Prefer": "return=minimal"},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=30) as response:
+            response.read()
+    except urllib.error.HTTPError as err:
+        raise SupabaseError(f"{err.code}: {err.read().decode(errors='replace')}") from err
+
+
 def existing_candidate_keys(keys: list[str]) -> set[str]:
     """source_keys already in the queue, so the AI judge never re-judges a post."""
     found: set[str] = set()

@@ -3,7 +3,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { signOut } from "@/app/auth-actions";
+import { AlertSettingsForm } from "@/components/alert-settings-form";
 import { ClaimButton } from "@/components/claim-button";
+import { getAlertSettings } from "@/lib/alerts";
 import { getActiveDeals } from "@/lib/deals";
 import { getViewer } from "@/lib/claims";
 import { SITE_NAME } from "@/lib/site";
@@ -28,7 +30,8 @@ async function Account() {
   if (!user) redirect("/login?next=/account");
 
   // Claimed deals that are still live; expired ones simply drop off.
-  const claimedDeals = (await getActiveDeals()).filter((d) => claimed.has(d.id));
+  const [activeDeals, alerts] = await Promise.all([getActiveDeals(), getAlertSettings()]);
+  const claimedDeals = activeDeals.filter((d) => claimed.has(d.id));
 
   return (
     <>
@@ -41,6 +44,15 @@ async function Account() {
           <button className="rounded-lg border border-line px-3 py-1.5 text-sm text-fg hover:bg-white/5">Sign out</button>
         </form>
       </header>
+
+      <section aria-labelledby="alerts" className="flex flex-col gap-3">
+        <h2 id="alerts" className="font-semibold text-fg">Email alerts</h2>
+        {user.email ? (
+          <AlertSettingsForm email={user.email} initial={alerts} />
+        ) : (
+          <p className="text-sm text-muted">Your account has no email address, so alerts aren&apos;t available.</p>
+        )}
+      </section>
 
       <section aria-labelledby="claimed" className="flex flex-col gap-3">
         <h2 id="claimed" className="font-semibold text-fg">
