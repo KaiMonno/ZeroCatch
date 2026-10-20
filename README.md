@@ -38,6 +38,7 @@
 - **Nightly pipeline** (Python, standard library only, on GitHub Actions): official sources (Epic, Steam, GOG, itch.io), curated trial and calendar files, press releases and freebie blogs. Every fetch honors robots.txt with an RFC 9309 parser.
 - **AI judge with guardrails:** blog and press leads pass keyword rules, then one structured-output call to Claude Haiku 4.5. The model can only pick the deal's link from links that match the brand in the title, so it can't invent or pick an ad URL. Only high-confidence verdicts publish, after deterministic re-checks. About $14 a year.
 - **Database-enforced rules** (Supabase Postgres): check constraints (a pure freebie can never require a card), a view that filters by start and end time at query time, row-level security on every user table, and column-level grants so users can't point alert emails at someone else's inbox.
+- **Tested end to end:** unit tests, Playwright flows on a real local Supabase, and axe WCAG 2.2 AA scans run on every push.
 - **Next.js 16 with Cache Components:** one shared, tag-invalidated cache for the deal list, with each visitor's claims and hidden vendors applied on top per request.
 
 | Tab | URL | What qualifies |
@@ -64,6 +65,25 @@ To use a real database:
 4. `npm run seed` upserts the 8 sample deals. It's idempotent because rows are keyed on `source_key`.
 
 Sample deals in `src/data/seed-deals.ts` are illustrative. Verify each one's real terms before publishing it.
+
+## Testing
+
+Every push runs three suites in CI ([`ci.yml`](.github/workflows/ci.yml)):
+
+| Suite | Command | What it covers |
+| --- | --- | --- |
+| Unit (Vitest) | `npm test` | Filtering and sorting rules, URL building, expiry and duration labels, guest-cookie parsing, open-redirect guard, and unsubscribe tokens signed by the Python sender verified by the site |
+| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, magic-link sign-in with guest data merging, alert settings, and unsubscribe (link and RFC 8058 one-click) |
+| Accessibility (axe + keyboard) | part of `npm run test:e2e` | WCAG 2.2 A/AA scans of every page at phone and desktop size, including open menus and forms, plus keyboard-only navigation |
+| Scrapers | `python -m unittest discover -s scrapers/tests -t .` | Sources, rules, AI-judge guardrails, robots.txt parser, alert digests |
+
+Browser tests need Docker and the local stack, and never touch production (the config refuses a non-local Supabase URL):
+
+```bash
+npx supabase start
+npx playwright install chromium   # once
+npm run test:e2e                  # seeds e2e:* fixture deals, builds, serves on :3100
+```
 
 ## Data model
 
@@ -115,7 +135,6 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 - **Scheduling:** Vercel Cron (`vercel.json`, free plan: within the hour) calls `/api/cron/scrape`, which starts the scrape workflow through GitHub's API. GitHub's own `schedule` stays as a backup, since it can run hours late. Needs `CRON_SECRET` and `GITHUB_DISPATCH_TOKEN` in Vercel.
 - **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads pending for 14 days, deletes deals expired over 90 days ago, prunes login-failure records.
 - **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
-- **Tests:** `python -m unittest discover -s scrapers/tests -t .`
 
 ## Project layout
 

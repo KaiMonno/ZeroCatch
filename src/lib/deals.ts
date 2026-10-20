@@ -47,7 +47,7 @@ function seedFallback(): Deal[] {
   }));
 }
 
-function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQuery): Deal[] {
+export function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQuery): Deal[] {
   // Re-check the time window: the cached list can be up to a minute old.
   const now = Date.now();
   const term = (q ?? "").trim().toLowerCase().slice(0, 80);
@@ -72,7 +72,7 @@ export const ITCH_MERCHANT = "itch.io";
 const sourceRank = (d: Deal) => (d.merchant === ITCH_MERCHANT ? 1 : 0);
 
 /** Longest trial first, then featured, then non-itch, then soonest-expiring, then newest. */
-function sortDeals(deals: Deal[]): Deal[] {
+export function sortDeals(deals: Deal[]): Deal[] {
   const exp = (d: Deal) => (d.expires_at ? Date.parse(d.expires_at) : Infinity);
   return [...deals].sort(
     (a, b) =>

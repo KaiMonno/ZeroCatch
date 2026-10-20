@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   web:
-    name: Web (typecheck, lint, build)
+    name: Web (typecheck, lint, unit tests, build)
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -26,8 +26,47 @@ jobs:
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
+      - name: Unit tests
+        run: npm test
       # No Supabase env here: the build exercises the sample-data fallback.
       - run: npm run build
+
+  e2e:
+    name: Browser + accessibility tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.121.0
+      # A throwaway local stack (Postgres, Auth, REST, Mailpit) with every
+      # migration applied: the tests never touch production.
+      - name: Start local Supabase
+        run: supabase start -x studio,imgproxy,storage-api,edge-runtime,logflare,vector,supavisor,realtime,postgres-meta
+      - name: Export local Supabase settings
+        run: |
+          eval "$(supabase status -o env)"
+          {
+            echo "E2E_SUPABASE_URL=$API_URL"
+            echo "E2E_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "E2E_SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+            echo "E2E_MAILPIT_URL=$MAILPIT_URL"
+          } >> "$GITHUB_ENV"
+      - run: npx playwright install --with-deps chromium
+      - name: Playwright (flows, keyboard, axe WCAG 2.2 A/AA)
+        run: npm run test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
   scrapers:
     name: Scrapers (unit tests)

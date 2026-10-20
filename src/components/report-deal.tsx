@@ -30,11 +30,12 @@ export function ReportDeal({ dealId, dealTitle }: { dealId: string; dealTitle: s
       </summary>
       <form action={action} className="mt-2 flex flex-col gap-2 rounded-xl border border-line bg-bg p-3">
         <input type="hidden" name="deal_id" value={dealId} />
-        <fieldset className="flex flex-col gap-1.5">
+        {/* 24px rows keep each radio a comfortable touch target (WCAG 2.5.8). */}
+        <fieldset className="flex flex-col gap-1">
           <legend className="mb-1 text-fg">What&apos;s wrong with this deal?</legend>
           {Object.entries(REPORT_REASONS).map(([value, label]) => (
-            <label key={value} className="inline-flex items-center gap-2 text-fg">
-              <input type="radio" name="reason" value={value} required /> {label}
+            <label key={value} className="inline-flex min-h-6 items-center gap-2 text-fg">
+              <input type="radio" name="reason" value={value} required className="size-4" /> {label}
             </label>
           ))}
         </fieldset>

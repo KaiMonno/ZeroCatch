@@ -54,7 +54,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             What qualifies
           </Link>
           <span aria-hidden>·</span>
-          <span>Open source</span>
+          <a
+            href="https://github.com/KaiMonno/ZeroCatch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline-offset-4 hover:text-fg hover:underline"
+          >
+            Open source
+          </a>
           <span aria-hidden>·</span>
           <span>Deals are checked, but always confirm terms before signing up.</span>
         </footer>
