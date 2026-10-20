@@ -8,6 +8,9 @@
 # - LinkedIn Premium: linkedin.com/help/linkedin/answer/a545578 (2026-10-05)
 # - Walmart+: Walmart+ terms, "free-trial cancellations end access immediately" (2026-10-05)
 # Removed: Hulu (no longer offers a free trial, 2026-10-12).
+# Not offered: GitHub Copilot Pro (trials paused since 2026-04-10, "temporary",
+#   github.blog/changelog/2026-04-10-pausing-new-github-copilot-pro-trials). The
+#   docs say cancelling keeps access to the trial end, so re-check and add if it returns.
 
 [[trial]]
 key = "amazon-prime"
@@ -78,3 +81,23 @@ url = "https://www.audible.com/ep/free-trial"
 duration_days = 30
 requires_credit_card = true
 verified = "2026-10-12: confirmed by hand (cancel keeps the trial until it ends)"
+
+[[trial]]
+key = "duolingo-super"
+merchant = "Duolingo"
+title = "Super Duolingo: 30-Day Free Trial"
+description = "No ads, unlimited hearts and personalized practice for 30 days. Card required at signup. Cancel right away and keep Super until the trial ends."
+url = "https://www.duolingo.com/super"
+duration_days = 30
+requires_credit_card = true
+verified = "2026-10-19: confirmed by hand (30-day trial; cancel keeps Super until the trial ends)"
+
+[[trial]]
+key = "skillshare"
+merchant = "Skillshare"
+title = "Skillshare: 7-Day Free Trial"
+description = "Unlimited access to thousands of creative classes for 7 days. Card required at signup. Cancel right away and keep access until the trial ends."
+url = "https://www.skillshare.com/"
+duration_days = 7
+requires_credit_card = true
+verified = "2026-10-19: confirmed by hand (7-day trial; cancel keeps access until the trial ends)"
