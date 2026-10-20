@@ -1,11 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { GUEST_CLAIMS_COOKIE, parseGuestClaims } from "@/lib/claims";
+import {
+  GUEST_CLAIMS_COOKIE,
+  GUEST_HIDDEN_COOKIE,
+  HIDDEN_VENDORS_MAX,
+  parseGuestClaims,
+  parseHiddenVendors,
+} from "@/lib/claims";
 import { safeNextPath } from "@/lib/safe-next";
 import { createSupabaseServerClient } from "@/lib/supabase-server";
 
 /**
  * Google sends the visitor back here with a one-time code. Exchange it for a
- * session, then fold any claims made as a guest into the account.
+ * session, then fold any claims and hidden vendors from guest browsing into the account.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
@@ -32,6 +38,23 @@ export async function GET(request: NextRequest) {
       if (mergeError) console.error("guest claim merge:", mergeError.message);
     }
     response.cookies.delete(GUEST_CLAIMS_COOKIE);
+  }
+
+  const guestHidden = parseHiddenVendors(request.cookies.get(GUEST_HIDDEN_COOKIE)?.value);
+  if (guestHidden.length) {
+    const { data: existing } = await supabase.from("hidden_vendors").select("merchant");
+    const have = new Set((existing ?? []).map((r) => r.merchant as string));
+    const rows = guestHidden
+      .filter((m) => !have.has(m))
+      .slice(0, Math.max(0, HIDDEN_VENDORS_MAX - have.size))
+      .map((merchant) => ({ user_id: data.user.id, merchant }));
+    if (rows.length) {
+      const { error: mergeError } = await supabase
+        .from("hidden_vendors")
+        .upsert(rows, { onConflict: "user_id,merchant", ignoreDuplicates: true });
+      if (mergeError) console.error("guest hidden-vendor merge:", mergeError.message);
+    }
+    response.cookies.delete(GUEST_HIDDEN_COOKIE);
   }
   return response;
 }

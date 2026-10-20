@@ -50,7 +50,7 @@ export function AlertSettingsForm({
           <span className="flex items-center gap-1.5 font-medium text-fg">
             <Bell aria-hidden className="size-4" /> Email me new deals
           </span>
-          <span className="text-sm text-muted">Sent to {email}. Only deals that pass every rule, never deals you&apos;ve claimed.</span>
+          <span className="text-sm text-muted">Sent to {email}. Only deals that pass every rule, never ones you&apos;ve claimed or from vendors you&apos;ve hidden.</span>
         </span>
       </label>
 

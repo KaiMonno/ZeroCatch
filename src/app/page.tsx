@@ -7,6 +7,7 @@ import { DealFolder } from "@/components/deal-folder";
 import { EmptyState } from "@/components/empty-state";
 import { FilterChips } from "@/components/filter-chips";
 import { HeroCard } from "@/components/hero-card";
+import { HiddenVendors } from "@/components/hidden-vendors";
 import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
 import { getViewer } from "@/lib/claims";
@@ -34,8 +35,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const filters = parseFilters(sp.f);
   const showClaimed = sp.claimed === "show";
 
-  // The deal list is a shared cache; each visitor's claims are applied on top.
-  const [matching, { claimed }] = await Promise.all([getDeals({ category: tab.category, q, filters }), getViewer()]);
+  // The deal list is a shared cache; each visitor's hidden vendors and claims are applied on top.
+  const [found, { claimed, hiddenVendors }] = await Promise.all([
+    getDeals({ category: tab.category, q, filters }),
+    getViewer(),
+  ]);
+  const matching = found.filter((d) => !hiddenVendors.has(d.merchant));
+  const hiddenHere = found.length - matching.length;
   const claimedHere = matching.filter((d) => claimed.has(d.id)).length;
   const deals = showClaimed ? matching : matching.filter((d) => !claimed.has(d.id));
 
@@ -62,6 +68,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <p className="text-sm text-muted">{tab.blurb}</p>
         </div>
         <FilterChips tab={tab.slug} q={q} active={filters} />
+        <HiddenVendors
+          vendors={[...hiddenVendors].sort((a, b) => a.localeCompare(b))}
+          label={hiddenHere > 0 ? `Hiding ${hiddenHere} deal${hiddenHere === 1 ? "" : "s"} from` : "Hidden:"}
+        />
       </div>
 
       {heroes.length > 0 && (
@@ -106,7 +116,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </ul>
         </section>
       ) : (
-        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={filters} />
+        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={filters} hiddenCount={hiddenHere} />
       )}
 
       <BadgeLegend />

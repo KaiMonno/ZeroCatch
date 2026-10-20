@@ -3,6 +3,7 @@ import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
 import { ClaimButton } from "./claim-button";
+import { HideVendorButton } from "./hide-vendor-button";
 import { ReportDeal } from "./report-deal";
 
 export function HeroCard({ deal, claimed = false }: { deal: Deal; claimed?: boolean }) {
@@ -41,8 +42,9 @@ export function HeroCard({ deal, claimed = false }: { deal: Deal; claimed?: bool
         <ExpiryLabel expiresAt={deal.expires_at} />
         <ClaimButton dealId={deal.id} dealTitle={deal.title} claimed={claimed} />
       </div>
-      <div className="mt-4">
+      <div className="mt-4 flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
         <ReportDeal dealId={deal.id} dealTitle={deal.title} />
+        <HideVendorButton merchant={deal.merchant} />
       </div>
     </section>
   );

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { signOut } from "@/app/auth-actions";
 import { AlertSettingsForm } from "@/components/alert-settings-form";
 import { ClaimButton } from "@/components/claim-button";
+import { HiddenVendors } from "@/components/hidden-vendors";
 import { getAlertSettings } from "@/lib/alerts";
 import { getActiveDeals } from "@/lib/deals";
 import { getViewer } from "@/lib/claims";
@@ -26,7 +27,7 @@ export default function AccountPage() {
 }
 
 async function Account() {
-  const { user, claimed } = await getViewer();
+  const { user, claimed, hiddenVendors } = await getViewer();
   if (!user) redirect("/login?next=/account");
 
   // Claimed deals that are still live; expired ones simply drop off.
@@ -51,6 +52,22 @@ async function Account() {
           <AlertSettingsForm email={user.email} initial={alerts} />
         ) : (
           <p className="text-sm text-muted">Your account has no email address, so alerts aren&apos;t available.</p>
+        )}
+      </section>
+
+      <section aria-labelledby="hidden-vendors" className="flex flex-col gap-3">
+        <h2 id="hidden-vendors" className="font-semibold text-fg">
+          Hidden vendors <span className="tabular-nums text-muted">{hiddenVendors.size}</span>
+        </h2>
+        <p className="text-sm text-muted">
+          Deals from these never show in your feed or alert emails. Tap one to see its deals again.
+        </p>
+        {hiddenVendors.size === 0 ? (
+          <p className="rounded-2xl border border-dashed border-line px-6 py-6 text-center text-sm text-muted">
+            None hidden. Use <span className="text-fg">Hide</span> on any deal to stop seeing that vendor.
+          </p>
+        ) : (
+          <HiddenVendors vendors={[...hiddenVendors].sort((a, b) => a.localeCompare(b))} label="" />
         )}
       </section>
 

@@ -75,12 +75,16 @@ def is_due(sub: dict, now: datetime) -> bool:
     return last is None or now - last >= timedelta(hours=20)
 
 
-def deals_for(sub: dict, deals: list[dict], topics: dict[str, str], claimed: set[str], now: datetime) -> list[dict]:
+def deals_for(
+    sub: dict, deals: list[dict], topics: dict[str, str], claimed: set[str], now: datetime,
+    hidden_vendors: frozenset[str] | set[str] = frozenset(),
+) -> list[dict]:
     window = timedelta(days=7 if sub["frequency"] == "weekly" else 1)
     since = datetime.fromisoformat(sub["last_sent_at"]) if sub.get("last_sent_at") else now - window
     picked = [
         d for d in deals
-        if available_since(d) > since and topics[d["id"]] in sub["topics"] and d["id"] not in claimed
+        if available_since(d) > since and topics[d["id"]] in sub["topics"]
+        and d["id"] not in claimed and d["merchant"] not in hidden_vendors
     ]  # fmt: skip
     picked.sort(key=lambda d: (list(TOPIC_LABELS).index(topics[d["id"]]), d.get("expires_at") or "9999"))
     return picked[:MAX_DEALS_PER_EMAIL]
@@ -198,10 +202,14 @@ def main() -> int:
     claims: dict[str, set[str]] = {}
     for row in supabase_rest.get_in("deal_claims?select=user_id,deal_id", "user_id", [s["user_id"] for s in due]):
         claims.setdefault(row["user_id"], set()).add(row["deal_id"])
+    hidden: dict[str, set[str]] = {}
+    for row in supabase_rest.get_in("hidden_vendors?select=user_id,merchant", "user_id", [s["user_id"] for s in due]):
+        hidden.setdefault(row["user_id"], set()).add(row["merchant"])
 
     outgoing: list[tuple[dict, dict]] = []
     for sub in due:
-        picked = deals_for(sub, deals, topics, claims.get(sub["user_id"], set()), now)
+        uid = sub["user_id"]
+        picked = deals_for(sub, deals, topics, claims.get(uid, set()), now, hidden.get(uid, set()))
         if picked:
             email = render_email(picked, topics, unsubscribe_token(sub["user_id"], secret))
             outgoing.append((sub, {"from": FROM, "to": [sub["email"]], **email}))

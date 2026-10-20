@@ -21,7 +21,7 @@ export function ReportDeal({ dealId, dealTitle }: { dealId: string; dealTitle: s
   }
 
   return (
-    <details className="group/report relative z-10 text-xs">
+    <details className="group/report relative z-10 text-xs open:basis-full">
       <summary
         aria-label={`Report a problem with ${dealTitle}`}
         className="inline-flex cursor-pointer list-none items-center gap-1 rounded text-muted hover:text-fg [&::-webkit-details-marker]:hidden">

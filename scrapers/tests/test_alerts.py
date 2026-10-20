@@ -53,6 +53,13 @@ class DealsForTest(unittest.TestCase):
         # "a" claimed, "b" wrong topic, "old" not new; Epic's pre-stored game counts when it starts.
         self.assertEqual(got, ["early"])
 
+    def test_hidden_vendors_are_skipped(self):
+        deals = [deal("a", "itch:x", merchant="itch.io"), deal("e", "epic:ns:id:e", merchant="Epic Games")]
+        topics = {d["id"]: "games" for d in deals}
+        sub = {"frequency": "daily", "last_sent_at": None, "topics": ["games"]}
+        got = [d["id"] for d in alerts.deals_for(sub, deals, topics, set(), NOW, {"itch.io"})]
+        self.assertEqual(got, ["e"])
+
 
 class TokenAndRenderTest(unittest.TestCase):
     def test_token_is_stable_and_bound_to_user(self):

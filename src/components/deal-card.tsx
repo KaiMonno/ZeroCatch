@@ -4,11 +4,12 @@ import type { Deal } from "@/lib/types";
 import { DealBadges } from "./deal-badges";
 import { ExpiryLabel } from "./expiry-label";
 import { ClaimButton } from "./claim-button";
+import { HideVendorButton } from "./hide-vendor-button";
 import { ReportDeal } from "./report-deal";
 
 export function DealCard({ deal, claimed = false }: { deal: Deal; claimed?: boolean }) {
   return (
-    <article className="group relative flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-line-strong has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-400">
+    <article className="group relative flex w-full flex-col gap-3 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-line-strong has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-400">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-wide text-muted">{deal.merchant}</p>
@@ -43,7 +44,10 @@ export function DealCard({ deal, claimed = false }: { deal: Deal; claimed?: bool
           <ExpiryLabel expiresAt={deal.expires_at} />
           <ClaimButton dealId={deal.id} dealTitle={deal.title} claimed={claimed} />
         </div>
-        <ReportDeal dealId={deal.id} dealTitle={deal.title} />
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+          <ReportDeal dealId={deal.id} dealTitle={deal.title} />
+          <HideVendorButton merchant={deal.merchant} />
+        </div>
       </div>
     </article>
   );

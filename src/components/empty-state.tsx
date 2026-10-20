@@ -7,7 +7,17 @@ import { TABS, buildHref, type FilterSlug, type Tab } from "@/lib/tabs";
  * nothing in this tab currently meets the bar. The second isn't an error, it's
  * the site doing its job, so say so.
  */
-export function EmptyState({ tab, q, filters }: { tab: Tab; q?: string; filters: FilterSlug[] }) {
+export function EmptyState({
+  tab,
+  q,
+  filters,
+  hiddenCount = 0,
+}: {
+  tab: Tab;
+  q?: string;
+  filters: FilterSlug[];
+  hiddenCount?: number;
+}) {
   const narrowed = Boolean(q) || filters.length > 0;
   const otherTab = TABS.find((t) => t.slug !== tab.slug)!;
 
@@ -38,10 +48,19 @@ export function EmptyState({ tab, q, filters }: { tab: Tab; q?: string; filters:
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
       <Hourglass aria-hidden className="size-8 text-muted" />
       <div>
-        <p className="font-medium text-fg">Nothing qualifies right now</p>
+        <p className="font-medium text-fg">{hiddenCount > 0 ? "Nothing else here right now" : "Nothing qualifies right now"}</p>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted">
-          We only list deals that pass every rule: no purchase, no paid membership, no hidden catch. That means some
-          days are quiet. New deals are checked every night.
+          {hiddenCount > 0 ? (
+            <>
+              {hiddenCount} deal{hiddenCount === 1 ? " is" : "s are"} from vendors you hid. Tap a vendor above to see
+              its deals again.
+            </>
+          ) : (
+            <>
+              We only list deals that pass every rule: no purchase, no paid membership, no hidden catch. That means
+              some days are quiet. New deals are checked every night.
+            </>
+          )}
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-2 text-sm">

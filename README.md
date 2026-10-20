@@ -122,6 +122,12 @@ Deals appear and disappear on time no matter how often scrapers run, because `ac
 - **Claims:** "Mark claimed" on any deal hides it from that visitor's feed, and "Show N claimed" brings it back with Undo. The deal list stays one shared cache, and each visitor's claims are filtered on top of it per request.
 - **Guests:** claims are kept in an httpOnly cookie (up to 80) that the server reads, so there's no flicker on first render. On sign-in they merge into the account and the cookie is cleared.
 - **Database:** `deal_claims` has RLS so users can only read and change their own rows. `my_active_deals` hides the caller's claims, ready for the Expo app.
+
+### Hidden vendors (built)
+
+- **"Hide <vendor>"** on any deal (with a one-tap confirm) hides every deal from that merchant, e.g. all itch.io games. Hidden vendors show as chips above the feed and on `/account`; tapping a chip brings them back.
+- Works like claims: guests keep up to 25 vendors in an httpOnly cookie (URI-encoded, since names can contain commas) that merges into the account on sign-in, and signed-in users keep them in `hidden_vendors` (RLS, own rows only). `my_active_deals` and alert emails both skip hidden vendors.
+
 ### Deal-alert emails (built)
 
 - **Opt in on `/account`:** topics (Games, Food, Trials, Other freebies) and frequency (daily when something new matches, or weekly on Mondays). Only signed-in users with a verified email can subscribe. A database trigger always sets the address from the user's own account, and column-level grants stop users from writing `email` or `last_sent_at`.
