@@ -55,7 +55,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 pb-16 pt-4 sm:pt-8">
-      <div className="sticky top-0 z-10 -mx-4 flex flex-col gap-3 bg-bg/85 px-4 pb-3 pt-2 backdrop-blur-md">
+      <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 bg-bg/85 px-4 pb-3 pt-2 backdrop-blur-md">
         <TabNav active={tab.slug} q={q} filters={filters} />
         <Suspense fallback={<div className="h-[42px] rounded-xl border border-line bg-surface" />}>
           <SearchBar placeholder={`Search ${tab.label.toLowerCase()}…`} />

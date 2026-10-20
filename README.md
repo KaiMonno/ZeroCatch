@@ -1,19 +1,49 @@
 # ZeroCatch
 
+[![CI](https://github.com/KaiMonno/ZeroCatch/actions/workflows/ci.yml/badge.svg)](https://github.com/KaiMonno/ZeroCatch/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 **Live: [zerocatch.dev](https://zerocatch.dev)**
 
-**Good-Faith Freebies:** a deal aggregator that only lists verified, no-strings-attached offers. No affiliate junk, no hidden card traps.
+**Good-Faith Freebies:** a deal aggregator that only lists verified, no-strings-attached offers. No affiliate links, no "free with purchase", no trials that end the moment you cancel. New deals are found, checked and published every night with no manual work, for under $15 a year.
+
+![ZeroCatch home feed on desktop: two featured Epic Games giveaways with badges and expiry](docs/screenshots/desktop-feed.jpg)
+
+<!-- Demo GIFs: add docs/demo-*.gif and reference them here, e.g. ![Hiding a vendor](docs/demo-hide-vendor.gif) -->
+
+## Features
+
+| Pure Freebies | Instant-Cancel Trials | Grouped indie games |
+| :---: | :---: | :---: |
+| ![Phone view of the Pure Freebies feed](docs/screenshots/mobile-feed.jpg) | ![Trials tab sorted longest first, with Card Required and Instant-Cancel Safe badges](docs/screenshots/mobile-trials.jpg) | ![A folder collapsing 12 free itch.io games into one card](docs/screenshots/mobile-itch-folder.jpg) |
+| Free with no payment method. Epic's weekly games are featured. | Trials you can cancel on day one and keep for the full period, longest first. | Three or more itch.io giveaways fold into one card so they can't crowd the feed. |
+
+| Hide a vendor | Hidden vendors | Deal-alert email |
+| :---: | :---: | :---: |
+| ![Confirm prompt: Hide all Epic Games deals?](docs/screenshots/mobile-hide-confirm.jpg) | ![Feed with an Epic Games chip: Hiding 2 deals from Epic Games](docs/screenshots/mobile-hidden.jpg) | ![Nightly digest email listing five new deals with terms and end dates](docs/screenshots/alert-email.jpg) |
+| Not into a store? Hide every deal from it, signed in or not. | Hidden vendors stay out of the feed and emails; tap a chip to bring one back. | Opt-in daily or weekly digests by topic, with one-click unsubscribe. |
+
+- **Badges on every deal:** card required or not, account required or not, instant-cancel safe, and a live countdown to the end date.
+- **Search and filters in the URL** (`?tab=trials&q=…&f=no-card,ending-soon`), so every view can be shared and is rendered on the server.
+- **Mark claimed:** claimed deals drop out of your feed. Works as a guest (cookie) and merges into your account when you sign in with Google.
+- **Report a problem:** three separate reports in a week hide a deal until it's reviewed.
+- **Installable PWA**, mobile-first dark UI.
+
+## How it works
+
+- **Nightly pipeline** (Python, standard library only, on GitHub Actions): official sources (Epic, Steam, GOG, itch.io), curated trial and calendar files, press releases and freebie blogs. Every fetch honors robots.txt with an RFC 9309 parser.
+- **AI judge with guardrails:** blog and press leads pass keyword rules, then one structured-output call to Claude Haiku 4.5. The model can only pick the deal's link from links that match the brand in the title, so it can't invent or pick an ad URL. Only high-confidence verdicts publish, after deterministic re-checks. About $14 a year.
+- **Database-enforced rules** (Supabase Postgres): check constraints (a pure freebie can never require a card), a view that filters by start and end time at query time, row-level security on every user table, and column-level grants so users can't point alert emails at someone else's inbox.
+- **Next.js 16 with Cache Components:** one shared, tag-invalidated cache for the deal list, with each visitor's claims and hidden vendors applied on top per request.
 
 | Tab | URL | What qualifies |
 | --- | --- | --- |
 | Pure Freebies | `/` | Free with no payment method. Account or promo code at most. |
 | Instant-Cancel Trials | `/?tab=trials` | Trials you can cancel on day one and still keep the full period. Sorted longest first. |
 
-Search (`q`) and filter chips (`f=no-card,no-account,ending-soon`) live in the URL, so every view can be shared and is rendered on the server.
-
 ## Stack
 
-Next.js 16 (App Router, TypeScript, Tailwind v4) on Vercel · Supabase Postgres · Python scrapers on GitHub Actions cron · installable PWA.
+Next.js 16 (App Router, TypeScript, Tailwind v4) on Vercel · Supabase (Postgres, Auth) · Python scrapers on GitHub Actions · Claude Haiku 4.5 · Resend · installable PWA.
 
 ## Getting started
 
@@ -50,11 +80,11 @@ The public rules are on the site at `/what-qualifies`. A deal is listed only if 
 ## Lead pipeline: mostly hands-off
 
 ```
-Vercel Cron (~midnight PT) ─▶ GitHub Actions ─▶ scrapers/
+Vercel Cron (~midnight PT) ─▶ GitHub Actions ─▶ scrapers/ ─▶ alert emails (Resend)
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
   │    Epic · Steam (no DLC) · GOG · itch.io · trials.toml · fixed-date calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
-  │    PR Newswire · Instagram brand posts   (AI_JUDGE_MODE: off / shadow / publish)
+  │    PR Newswire · I Crave Freebies · Money Saving Mom · Instagram   (AI_JUDGE_MODE: off / shadow / publish)
   └─ review queue (/admin/review): variable-date calendar entries, judged leads while the judge is off
 Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ```
@@ -86,25 +116,26 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ## Project layout
 
 ```
-src/app/            page (tabs via searchParams), layout, manifest, icons, loading/error
-src/components/     DealCard, HeroCard, TabNav, SearchBar, FilterChips, BadgeLegend
-src/lib/deals.ts    the only data-access module (Supabase query + local fallback)
-src/lib/tabs.ts     tab and filter config, URL builder
-src/app/admin/      review queue + published deals: login, server actions, shared deal form
-supabase/           SQL migrations (run in filename order)
-scrapers/           Python lead scrapers + unit tests
-scripts/seed.ts     service-role upsert of sample data
-.github/workflows/  nightly scrape job
+src/app/              home feed (tabs via searchParams), account, login, auth callback, unsubscribe, what-qualifies
+src/app/admin/        review queue + published deals: password login, server actions, shared deal form
+src/app/api/          cron trigger for the nightly scrape, one-click unsubscribe
+src/components/       DealCard, HeroCard, DealFolder, TabNav, SearchBar, FilterChips, claim/hide/report controls
+src/lib/deals.ts      the only deal data-access module (cached Supabase query + local fallback)
+src/lib/claims.ts     who's viewing: claims and hidden vendors from the account or guest cookies
+supabase/migrations/  SQL migrations (run in filename order)
+scrapers/             Python sources, AI judge, alert sender, unit tests; data/*.toml curated lists
+docs/screenshots/     README images
+.github/workflows/    CI (typecheck, lint, build, tests) and the nightly scrape
 ```
 
 ## Roadmap
 
 | Phase | Scope | Status |
 | --- | --- | --- |
-| 1 | Web MVP: three tabs, badges, search and filters, PWA | Done (sample data) |
-| 1.5 | Data pipeline: scrapers, AI judge, curated trials and calendar, reports | AI judge in shadow mode; Instagram needs a Meta developer account |
+| 1 | Web MVP: two tabs, badges, search and filters, PWA | Done |
+| 1.5 | Data pipeline: scrapers, AI judge, curated trials and calendar, reports | Done (AI judge publishing) |
+| 3 | Accounts, "Mark claimed", hidden vendors, deal-alert emails | Done |
 | 2 | Expo mobile app on the same Supabase backend | Planned |
-| 3 | Accounts and "Mark as claimed" | Planned |
 
 ### Refresh schedule
 
