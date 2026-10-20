@@ -14,11 +14,21 @@ export function SearchBar({ placeholder }: { placeholder: string }) {
   const [isPending, startTransition] = useTransition();
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  // Keep the input in sync when the URL changes elsewhere (back button, links).
+  // Searches sent to the URL that haven't come back yet, oldest first. When the
+  // URL catches up to one of them it's our own echo (possibly late or out of
+  // order), so the text the visitor is still typing is left alone. Only a change
+  // from elsewhere (back button, "Clear search") replaces the input.
+  const [pending, setPending] = useState<string[]>([]);
   const [lastUrlQuery, setLastUrlQuery] = useState(urlQuery);
   if (urlQuery !== lastUrlQuery) {
     setLastUrlQuery(urlQuery);
-    setValue(urlQuery);
+    const echo = pending.indexOf(urlQuery);
+    if (echo >= 0) {
+      setPending(pending.slice(echo + 1));
+    } else {
+      setPending([]);
+      setValue(urlQuery);
+    }
   }
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -26,9 +36,12 @@ export function SearchBar({ placeholder }: { placeholder: string }) {
   function commit(next: string) {
     const sp = new URLSearchParams(searchParams.toString());
     const trimmed = next.trim();
+    // A trailing space (or retyping the same thing) doesn't change the results.
+    if (trimmed === (pending.at(-1) ?? urlQuery)) return;
     if (trimmed) sp.set("q", trimmed);
     else sp.delete("q");
     const qs = sp.toString();
+    setPending((p) => [...p, trimmed]);
     startTransition(() => router.replace(qs ? `/?${qs}` : "/", { scroll: false }));
   }
 
