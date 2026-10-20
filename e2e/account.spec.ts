@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { admin, dealCard, signIn, uniqueEmail, userIdFor } from "./helpers";
 
 test.describe("signed-in visitor", () => {
-  test("guest claims and hidden vendors move into the account on sign-in", async ({ context, page }) => {
+  test("guest claims and hidden vendors move into the account on sign-in", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /^Mark claimed\W+E2E Free Pizza Slice$/ }).click();
     await expect(page.getByRole("heading", { name: "E2E Free Pizza Slice" })).toHaveCount(0);
@@ -11,14 +11,14 @@ test.describe("signed-in visitor", () => {
     await expect(page.getByRole("button", { name: "Show E2E Samples deals again" })).toBeVisible();
 
     const email = uniqueEmail("merge");
-    await signIn(context, page, email);
+    await signIn(page, email);
 
     await expect(page.getByRole("heading", { name: /Hidden vendors/ })).toContainText("1");
     await expect(page.getByRole("button", { name: "Show E2E Samples deals again" })).toBeVisible();
     const claimed = page.getByRole("region", { name: /Claimed deals/ });
     await expect(claimed.getByText("E2E Free Pizza Slice", { exact: true })).toBeVisible();
     // The guest cookies are cleared once merged.
-    const names = (await context.cookies()).map((c) => c.name);
+    const names = (await page.context().cookies()).map((c) => c.name);
     expect(names).not.toContain("zc_claims");
     expect(names).not.toContain("zc_hidden_vendors");
 
@@ -33,9 +33,9 @@ test.describe("signed-in visitor", () => {
     await expect(page.getByRole("heading", { name: "E2E Free Sample Box" })).toHaveCount(0);
   });
 
-  test("alert settings validate, save and persist", async ({ context, page }) => {
+  test("alert settings validate, save and persist", async ({ page }) => {
     const email = uniqueEmail("alerts");
-    await signIn(context, page, email);
+    await signIn(page, email);
 
     await page.getByLabel("Email me new deals").check();
     for (const topic of [/^Games/, /^Food/, /^Instant-cancel/, /^Other freebies/]) await page.getByLabel(topic).uncheck();

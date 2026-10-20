@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <body style="margin:0;background:#f3f4f6;font-family:-apple-system,Segoe UI,Roboto,sans-serif">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr>
+        <td align="center" style="padding:24px 12px">
+          <table role="presentation" width="100%" style="max-width:480px;background:#ffffff;border-radius:12px;padding:28px">
+            <tr><td style="font-size:20px;font-weight:700;color:#111827">ZeroCatch</td></tr>
+            <tr>
+              <td style="font-size:15px;color:#374151;padding:12px 0 20px">
+                Tap the button to sign in. It works once, on any device, for the next hour.
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <a href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=email"
+                   style="display:inline-block;background:#047857;color:#ffffff;font-weight:600;font-size:15px;text-decoration:none;padding:12px 20px;border-radius:10px">
+                  Sign in to ZeroCatch
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:14px;color:#374151;padding:24px 0 6px">Using the installed app? Enter this code instead:</td>
+            </tr>
+            <tr>
+              <td style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:28px;font-weight:700;letter-spacing:6px;color:#111827">{{ .Token }}</td>
+            </tr>
+            <tr>
+              <td style="font-size:12px;color:#6b7280;padding-top:24px">
+                Didn't ask to sign in? You can ignore this email; nothing happens without the link or code.
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -33,8 +33,8 @@ for (const viewport of [null, { width: 1280, height: 900 }]) {
   });
 }
 
-test("account page has no violations", async ({ context, page }) => {
-  await signIn(context, page, uniqueEmail("a11y"));
+test("account page has no violations", async ({ page }) => {
+  await signIn(page, uniqueEmail("a11y"));
   await expectNoA11yViolations(page, "account");
 });
 

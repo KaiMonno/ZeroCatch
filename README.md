@@ -73,7 +73,7 @@ Every push runs three suites in CI ([`ci.yml`](.github/workflows/ci.yml)):
 | Suite | Command | What it covers |
 | --- | --- | --- |
 | Unit (Vitest) | `npm test` | Filtering and sorting rules, URL building, expiry and duration labels, guest-cookie parsing, open-redirect guard, and unsubscribe tokens signed by the Python sender verified by the site |
-| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, magic-link sign-in with guest data merging, alert settings, and unsubscribe (link and RFC 8058 one-click) |
+| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, email sign-in (link on another device, one-time use, code, rate limits) with guest data merging, alert settings, and unsubscribe (link and RFC 8058 one-click) |
 | Accessibility (axe + keyboard) | part of `npm run test:e2e` | WCAG 2.2 A/AA scans of every page at phone and desktop size, including open menus and forms, plus keyboard-only navigation |
 | Scrapers | `python -m unittest discover -s scrapers/tests -t .` | Sources, rules, AI-judge guardrails, robots.txt parser, alert digests |
 
@@ -173,6 +173,7 @@ Deals appear and disappear on time no matter how often scrapers run, because `ac
 ### Accounts and "Mark as claimed" (built)
 
 - **Sign in with Google** (Supabase Auth via `@supabase/ssr`): `src/proxy.ts` refreshes the session on each request, and server code checks it with `getClaims()`. `/login` starts the OAuth flow, and `/auth/callback` exchanges the code (redirects are limited to same-site paths).
+- **Or sign in by email, no password:** one email (sent through Resend via Supabase's custom SMTP) carries a link and a code. The link is verified server-side with a token hash at `/auth/confirm`, so it works on any device, and it takes one tap to use, so mail scanners that open links can't burn it. The code is for the installed PWA, where tapping a link would open the browser. Requests are capped per visitor (5/hour), per address (3/hour) and site-wide (40/day), stored only as salted hashes, so the form can't flood an inbox or use up the Resend quota the alert emails share. The same template lives in `supabase/templates/sign-in.html`.
 - **Claims:** "Mark claimed" on any deal hides it from that visitor's feed, and "Show N claimed" brings it back with Undo. The deal list stays one shared cache, and each visitor's claims are filtered on top of it per request.
 - **Guests:** claims are kept in an httpOnly cookie (up to 80) that the server reads, so there's no flicker on first render. On sign-in they merge into the account and the cookie is cleared.
 - **Database:** `deal_claims` has RLS so users can only read and change their own rows. `my_active_deals` hides the caller's claims, ready for the Expo app.

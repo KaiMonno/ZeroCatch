@@ -1,9 +1,8 @@
 "use server";
 
-import { createHash } from "node:crypto";
 import { updateTag } from "next/cache";
-import { headers } from "next/headers";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { visitorHash } from "@/lib/visitor-hash";
 import { REPORT_REASONS, type ReportReason } from "@/lib/types";
 
 export interface ReportState {
@@ -16,12 +15,6 @@ const MAX_REPORTS_PER_HOUR = 5;
 const HIDE_THRESHOLD = 3;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-/** Salted hash: lets us rate-limit and count distinct reporters without storing IPs. */
-async function reporterHash(): Promise<string> {
-  const ip = (await headers()).get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const salt = process.env.REPORT_SALT ?? process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
-  return createHash("sha256").update(`${salt}:${ip}`).digest("hex");
-}
 
 export async function reportDeal(_prev: ReportState, form: FormData): Promise<ReportState> {
   const dealId = String(form.get("deal_id") ?? "");
@@ -33,7 +26,7 @@ export async function reportDeal(_prev: ReportState, form: FormData): Promise<Re
   // Sample-data mode (no database) has nothing to report against.
   if (!supabase || !UUID_RE.test(dealId)) return { ok: true };
 
-  const hash = await reporterHash();
+  const hash = await visitorHash(); // rate limits and distinct reporters, no IPs stored
   const hourAgo = new Date(Date.now() - 3_600_000).toISOString();
   const { count } = await supabase
     .from("deal_reports")

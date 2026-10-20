@@ -161,7 +161,7 @@ site_url = "http://localhost:3000"
 # The public URL that Auth serves on. Defaults to the API external URL with `/auth/v1` appended.
 # external_url = ""
 # A list of *exact* URLs that auth providers are permitted to redirect to post authentication.
-additional_redirect_urls = ["http://localhost:3000/auth/callback**", "http://localhost:3002/auth/callback**", "http://localhost:3100/auth/callback**"]
+additional_redirect_urls = ["http://localhost:3000/**", "http://localhost:3002/**", "http://localhost:3100/**"]
 # How long tokens are valid for, in seconds. Defaults to 3600 (1 hour), maximum 604,800 (1 week).
 jwt_expiry = 3600
 # JWT issuer URL. If not set, defaults to auth.external_url.
@@ -245,6 +245,17 @@ otp_expiry = 3600
 # sender_name = "Admin"
 
 # Uncomment to customize email template
+# Sign-in emails carry a link (checked server-side at /auth/confirm, so it works
+# on any device) and a code. Production uses the same template: paste it into
+# Supabase → Authentication → Emails for "Magic Link" and "Confirm signup".
+[auth.email.template.magic_link]
+subject = "Your ZeroCatch sign-in link"
+content_path = "./supabase/templates/sign-in.html"
+
+[auth.email.template.confirmation]
+subject = "Your ZeroCatch sign-in link"
+content_path = "./supabase/templates/sign-in.html"
+
 # [auth.email.template.invite]
 # subject = "You have been invited"
 # content_path = "./supabase/templates/invite.html"

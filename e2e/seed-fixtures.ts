@@ -35,6 +35,9 @@ async function main() {
   if (delError) throw new Error(`clearing fixtures: ${delError.message}`);
   const { error } = await db.from("deals").insert(FIXTURES);
   if (error) throw new Error(`inserting fixtures: ${error.message}`);
+  // Fresh sign-in email counters, so repeated local runs don't hit the daily cap.
+  const { error: limitError } = await db.from("sign_in_email_requests").delete().gte("id", 0);
+  if (limitError) throw new Error(`clearing sign-in limits: ${limitError.message}`);
   console.log(`e2e: ${FIXTURES.length} fixture deals ready`);
 }
 
