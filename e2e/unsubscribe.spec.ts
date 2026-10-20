@@ -36,7 +36,7 @@ test.describe("unsubscribe", () => {
     const forged = `${userId}.${"A".repeat(43)}`;
     await page.goto(`/unsubscribe?token=${encodeURIComponent(forged)}`);
     await page.getByRole("button", { name: "Yes, unsubscribe" }).click();
-    await expect(page.getByRole("alert")).toBeVisible();
+    await expect(page.getByRole("alert").filter({ hasText: /invalid/ })).toBeVisible();
     expect(await isActive(userId)).toBe(true);
   });
 
