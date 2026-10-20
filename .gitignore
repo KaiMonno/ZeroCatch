@@ -44,3 +44,6 @@ next-env.d.ts
 # python
 __pycache__/
 *.pyc
+
+# Raw screen recordings (converted GIFs live in docs/)
+*.mov

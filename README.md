@@ -9,7 +9,11 @@
 
 ![ZeroCatch home feed on desktop: two featured Epic Games giveaways with badges and expiry](docs/screenshots/desktop-feed.jpg)
 
-<!-- Demo GIFs: add docs/demo-*.gif and reference them here, e.g. ![Hiding a vendor](docs/demo-hide-vendor.gif) -->
+### See it in action
+
+| Hide a vendor | Mark claimed | Tabs, filters and search |
+| :---: | :---: | :---: |
+| ![Hiding all Epic Games deals with one confirm, then tapping the chip to bring them back](docs/demo-hide-vendor.gif) | ![Marking a trial claimed so it leaves the feed, showing claimed deals, then undoing](docs/demo-mark-claimed.gif) | ![Toggling the No card and No account filters, searching for Love, then switching to the Trials tab](docs/demo-tabs-search-filter.gif) |
 
 ## Features
 
