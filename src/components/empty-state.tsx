@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { OfflineAwareLink as Link } from "./offline-aware-link";
 import { Hourglass, SearchX } from "lucide-react";
 import { TABS, buildHref, type FilterSlug, type Tab } from "@/lib/tabs";
 

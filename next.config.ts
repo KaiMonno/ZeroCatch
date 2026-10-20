@@ -19,8 +19,25 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   cacheComponents: true,
   allowedDevOrigins: lanAddresses,
+  experimental: {
+    // Connectivity-aware UI (`useOffline`) and automatic retry of navigations
+    // and Server Actions (claim, hide) once the connection comes back.
+    useOffline: true,
+  },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      { source: "/:path*", headers: securityHeaders },
+      {
+        // The offline service worker (public/sw.js): never cached, so a new
+        // version reaches installed apps right away; same-origin scripts only.
+        source: "/sw.js",
+        headers: [
+          { key: "Content-Type", value: "application/javascript; charset=utf-8" },
+          { key: "Cache-Control", value: "no-cache, no-store, must-revalidate" },
+          { key: "Content-Security-Policy", value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+    ];
   },
 };
 

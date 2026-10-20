@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
-import { signOut } from "@/app/auth-actions";
 import { AlertSettingsForm } from "@/components/alert-settings-form";
 import { ClaimButton } from "@/components/claim-button";
 import { HiddenVendors } from "@/components/hidden-vendors";
+import { SignOutButton } from "@/components/sign-out-button";
 import { getAlertSettings } from "@/lib/alerts";
 import { getActiveDeals } from "@/lib/deals";
 import { getViewer } from "@/lib/claims";
@@ -41,9 +41,7 @@ async function Account() {
           <h1 className="text-2xl font-bold text-fg">Your account</h1>
           <p className="mt-1 text-sm text-muted">{user.email}</p>
         </div>
-        <form action={signOut}>
-          <button className="rounded-lg border border-line px-3 py-1.5 text-sm text-fg hover:bg-white/5">Sign out</button>
-        </form>
+        <SignOutButton />
       </header>
 
       <section aria-labelledby="alerts" className="flex flex-col gap-3">

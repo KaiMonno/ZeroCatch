@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
+import { OfflineBanner } from "@/components/offline-banner";
+import { ServiceWorker } from "@/components/service-worker";
 import { UserMenu } from "@/components/user-menu";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_URL } from "@/lib/site";
 import "./globals.css";
@@ -30,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
+        <OfflineBanner />
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-fg">
             <span
@@ -65,6 +68,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <span aria-hidden>·</span>
           <span>Deals are checked, but always confirm terms before signing up.</span>
         </footer>
+        <ServiceWorker />
       </body>
     </html>
   );

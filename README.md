@@ -31,7 +31,7 @@
 - **Search and filters in the URL** (`?tab=trials&q=…&f=no-card,ending-soon`), so every view can be shared and is rendered on the server.
 - **Mark claimed:** claimed deals drop out of your feed. Works as a guest (cookie) and merges into your account when you sign in with Google.
 - **Report a problem:** three separate reports in a week hide a deal until it's reviewed.
-- **Installable PWA**, mobile-first dark UI.
+- **Installable PWA that works offline:** the app opens with the deals from your last visit (both tabs are saved on install), says how old they are, and keeps countdowns honest. Claims and hides made offline go through when the connection returns.
 
 ## How it works
 
@@ -73,7 +73,7 @@ Every push runs three suites in CI ([`ci.yml`](.github/workflows/ci.yml)):
 | Suite | Command | What it covers |
 | --- | --- | --- |
 | Unit (Vitest) | `npm test` | Filtering and sorting rules, URL building, expiry and duration labels, guest-cookie parsing, open-redirect guard, and unsubscribe tokens signed by the Python sender verified by the site |
-| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, email sign-in (link on another device, one-time use, code, rate limits) with guest data merging, alert settings, and unsubscribe (link and RFC 8058 one-click) |
+| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, email sign-in (link on another device, one-time use, code, rate limits) with guest data merging, alert settings, unsubscribe (link and RFC 8058 one-click), and offline mode (service worker, retries on reconnect) |
 | Accessibility (axe + keyboard) | part of `npm run test:e2e` | WCAG 2.2 A/AA scans of every page at phone and desktop size, including open menus and forms, plus keyboard-only navigation |
 | Scrapers | `python -m unittest discover -s scrapers/tests -t .` | Sources, rules, AI-judge guardrails, robots.txt parser, alert digests |
 
@@ -189,6 +189,13 @@ Deals appear and disappear on time no matter how often scrapers run, because `ac
 - **Sending** (`python -m scrapers.alerts`, after each nightly scrape) uses Resend's batch API from `alerts@zerocatch.dev`. A deal counts as new once it's visible, claimed deals are skipped, each subscriber gets at most one email per period, and every batch carries an `Idempotency-Key`. It's capped at 90 emails a run (Resend's free tier allows 100/day).
 - **Unsubscribe:** HMAC-signed links, plus RFC 8058 one-click `List-Unsubscribe` headers that mail apps POST to `/api/alerts/unsubscribe`. Links in the email go to `/unsubscribe`, which asks before acting so link scanners can't unsubscribe anyone.
 - Needs `RESEND_API_KEY` (GitHub) and the same `ALERTS_SIGNING_SECRET` in GitHub and Vercel; the send step skips quietly without them.
+
+### Offline support (built)
+
+- **Service worker** (`public/sw.js`, hand-written, no dependencies): feed pages are network-first with a saved fallback, stamped with when they were saved; each saved page's `/_next/static` assets are saved with it, so even never-opened pages work offline. `/` and `/?tab=trials` are saved at install. Account, sign-in, admin and API routes are never cached, and sign-out clears saved pages. Unsaved views redirect to `/offline` (a redirect, so the URL matches the page and the router doesn't try to fetch the original route).
+- **Next.js `experimental.useOffline`:** detects lost connectivity and holds navigations and Server Actions (claim, hide) until it's back, then sends them once. The service worker never answers Next's RSC, action or HEAD connectivity requests, so that detection stays accurate.
+- **UI:** an offline banner with the saved time; tabs and filter links switch to full page loads while offline so saved copies answer instantly; expiry labels hydrate with the server's render time, then follow the real clock (a day-old saved page shows "Expired").
+- Tested in `e2e/offline.spec.ts`: cold start offline, both tabs, the unsaved-view page, an offline claim completing on reconnect, countdowns a day later, and account pages never being cached.
 
 ### Local development with Supabase
 
