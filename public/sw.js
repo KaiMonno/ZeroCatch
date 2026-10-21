@@ -12,7 +12,7 @@
  *
  * Bump VERSION when this file's caching rules change; old caches are dropped.
  */
-const VERSION = "v2"; // v2: new logo (icons keep their file names)
+const VERSION = "v3"; // v3: back to the placeholder logo (icons keep their file names)
 const PAGES = `zc-pages-${VERSION}`;
 const ASSETS = `zc-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
@@ -27,7 +27,7 @@ const isSavedPage = (url) => url.pathname === "/" || url.pathname === "/what-qua
 const isAsset = (url) =>
   url.pathname.startsWith("/_next/static/") ||
   url.pathname.startsWith("/icons/") ||
-  ["/manifest.webmanifest", "/icon.png", "/apple-icon.png", "/logo.png"].includes(url.pathname);
+  ["/manifest.webmanifest", "/icon.png", "/apple-icon.png"].includes(url.pathname);
 
 self.addEventListener("install", (event) => {
   event.waitUntil(

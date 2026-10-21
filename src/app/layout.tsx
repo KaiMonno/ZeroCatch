@@ -35,9 +35,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <OfflineBanner />
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
           <Link href="/" className="flex items-center gap-2 text-lg font-bold tracking-tight text-fg">
-            {/* 32px pixel-art logo: shown at a whole-number scale with no smoothing so it stays crisp. */}
-            {/* eslint-disable-next-line @next/next/no-img-element -- next/image would resample (blur) the pixel art */}
-            <img src="/logo.png" alt="" width={32} height={32} className="size-8 rounded [image-rendering:pixelated]" />
+            <span
+              aria-hidden
+              className="grid size-7 place-items-center rounded-lg bg-emerald-400 text-sm font-black text-emerald-950"
+            >
+              0
+            </span>
             ZeroCatch
           </Link>
           <div className="flex items-center gap-3">
