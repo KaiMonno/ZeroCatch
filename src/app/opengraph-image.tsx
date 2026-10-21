@@ -1,3 +1,5 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 
@@ -11,7 +13,10 @@ const BADGES = [
   { label: "No Affiliate Junk", color: "#c4b5fd", bg: "rgba(139,92,246,0.15)" },
 ];
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  // The pixel-art logo pre-scaled 3× (public/icons/logo-96.png), drawn at its own size so it stays crisp.
+  const png = await readFile(join(process.cwd(), "public/icons/logo-96.png"));
+  const logo = `data:image/png;base64,${png.toString("base64")}`;
   return new ImageResponse(
     (
       <div
@@ -27,22 +32,7 @@ export default function OpenGraphImage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <div
-            style={{
-              width: 96,
-              height: 96,
-              borderRadius: 24,
-              background: "#34d399",
-              color: "#022c22",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 64,
-              fontWeight: 900,
-            }}
-          >
-            0
-          </div>
+          <img src={logo} alt="" width={96} height={96} style={{ borderRadius: 12 }} />
           <div style={{ fontSize: 72, fontWeight: 800 }}>{SITE_NAME}</div>
         </div>
         <div style={{ marginTop: 32, fontSize: 48, color: "#9aa3ae" }}>
