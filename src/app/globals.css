@@ -1,14 +1,22 @@
 @import "tailwindcss";
 
-/* Dark-first palette. Exposed as Tailwind colors: bg-bg, bg-surface, text-fg, text-muted, border-line… */
+/*
+ * Dark-first palette with a faint green cast, exposed as Tailwind colors:
+ * bg-bg, bg-surface, text-fg, text-muted, border-line… Display type
+ * (Bricolage Grotesque) is for headings and the wordmark; mono (Geist Mono)
+ * for numbers that work like a ticket stub: countdowns, counts, trial lengths.
+ */
 @theme {
-  --color-bg: #0b0d10;
-  --color-surface: #13161b;
-  --color-line: #242830;
-  --color-line-strong: #383e49;
-  --color-fg: #eceef1;
-  --color-muted: #9aa3ae;
+  --color-bg: #0a0c0b;
+  --color-surface: #121513;
+  --color-surface-2: #181c19;
+  --color-line: #232823;
+  --color-line-strong: #353c36;
+  --color-fg: #edf0ec;
+  --color-muted: #9da79f;
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), var(--font-geist-sans), ui-sans-serif, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
 }
 
 html {
@@ -17,8 +25,18 @@ html {
 }
 
 body {
-  background: var(--color-bg);
+  /* A soft mint glow behind the header, fading into the page. */
+  background:
+    radial-gradient(1100px 420px at 50% -180px, rgb(52 211 153 / 0.11), transparent 70%),
+    var(--color-bg);
+  background-repeat: no-repeat;
   color: var(--color-fg);
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 @media (prefers-reduced-motion: reduce) {

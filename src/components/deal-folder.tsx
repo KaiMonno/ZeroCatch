@@ -25,14 +25,18 @@ export function DealFolder({
   );
   return (
     <details className="group/folder rounded-2xl border border-line bg-surface open:border-line-strong">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 hover:bg-white/[0.03] sm:gap-4 [&::-webkit-details-marker]:hidden">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white/5 text-muted">
-          <Folder aria-hidden className="size-5" />
+      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 hover:bg-surface-2 sm:gap-4 [&::-webkit-details-marker]:hidden">
+        {/* A small stack of "tickets": this card holds several deals. */}
+        <span aria-hidden className="relative grid size-11 shrink-0 place-items-center">
+          <span className="absolute inset-0 translate-x-1 -translate-y-1 rotate-6 rounded-xl border border-line-strong bg-surface-2" />
+          <span className="relative grid size-11 place-items-center rounded-xl border border-line-strong bg-surface-2 text-muted">
+            <Folder className="size-5" />
+          </span>
         </span>
         <span className="min-w-0 flex-1">
-          <span className="flex items-center gap-2 font-semibold text-fg">
+          <span className="flex items-center gap-2 font-display text-base font-bold text-fg">
             {title}
-            <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-xs tabular-nums">{deals.length}</span>
+            <span className="rounded-md bg-white/10 px-1.5 py-px font-mono text-[11px] font-medium tabular-nums">{deals.length}</span>
           </span>
           <span className="mt-0.5 block truncate text-sm text-muted">
             {blurb} · {deals.slice(0, 3).map((d) => d.title.replace(/: Free on itch\.io$/, "")).join(", ")}
@@ -56,7 +60,7 @@ export function DealFolder({
           <ChevronDown aria-hidden className="size-4 transition-transform group-open/folder:rotate-180" />
         </span>
       </summary>
-      <ul className="grid grid-cols-1 gap-3 border-t border-line p-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid grid-cols-1 gap-3 border-t border-dashed border-line-strong p-3 sm:grid-cols-2 lg:grid-cols-3">
         {deals.map((deal) => (
           <li key={deal.id} className="flex">
             <DealCard deal={deal} claimed={claimed.has(deal.id)} />

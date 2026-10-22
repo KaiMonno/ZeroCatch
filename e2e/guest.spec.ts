@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { dealCard } from "./helpers";
+import { dealCard, openCardMenu } from "./helpers";
 
 test.describe("guest visitor", () => {
   test("marks a deal claimed, reveals it again, and undoes", async ({ page }) => {
@@ -19,7 +19,7 @@ test.describe("guest visitor", () => {
 
   test("hides a vendor after confirming, and the chip brings it back", async ({ page }) => {
     await page.goto("/");
-    const card = dealCard(page, "E2E Free Pizza Slice");
+    const card = await openCardMenu(page, "E2E Free Pizza Slice");
 
     await card.getByRole("button", { name: "Hide E2E Pizza Co" }).click();
     await card.getByRole("button", { name: "Cancel" }).click();

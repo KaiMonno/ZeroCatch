@@ -14,7 +14,7 @@ import { getViewer } from "@/lib/claims";
 import { ITCH_MERCHANT, getDeals } from "@/lib/deals";
 import { SITE_NAME } from "@/lib/site";
 import { isSupabaseConfigured } from "@/lib/supabase";
-import { TABS, buildHref, parseFilters, resolveTab } from "@/lib/tabs";
+import { TABS, buildHref, parseFilters, resolveTab, type TabSlug } from "@/lib/tabs";
 
 export async function generateMetadata({ searchParams }: PageProps<"/">): Promise<Metadata> {
   const { tab: slug } = await searchParams;
@@ -36,10 +36,15 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const showClaimed = sp.claimed === "show";
 
   // The deal list is a shared cache; each visitor's hidden vendors and claims are applied on top.
-  const [found, { claimed, hiddenVendors }] = await Promise.all([
-    getDeals({ category: tab.category, q, filters }),
+  const [perTab, { claimed, hiddenVendors }] = await Promise.all([
+    Promise.all(TABS.map((t) => getDeals({ category: t.category, q, filters }))),
     getViewer(),
   ]);
+  const found = perTab[TABS.findIndex((t) => t.slug === tab.slug)];
+  // What each tab would show right now, for the counts on the tabs.
+  const counts = Object.fromEntries(
+    TABS.map((t, i) => [t.slug, perTab[i].filter((d) => !hiddenVendors.has(d.merchant) && !claimed.has(d.id)).length]),
+  ) as Record<TabSlug, number>;
   const matching = found.filter((d) => !hiddenVendors.has(d.merchant));
   const hiddenHere = found.length - matching.length;
   const claimedHere = matching.filter((d) => claimed.has(d.id)).length;
@@ -54,18 +59,18 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const rest = folded ? listed.filter((d) => d.merchant !== ITCH_MERCHANT) : listed;
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 pb-16 pt-4 sm:pt-8">
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 pb-6 pt-4 sm:pt-8">
       <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 bg-bg/85 px-4 pb-3 pt-2 backdrop-blur-md">
-        <TabNav active={tab.slug} q={q} filters={filters} />
+        <TabNav active={tab.slug} q={q} filters={filters} counts={counts} />
         <Suspense fallback={<div className="h-[42px] rounded-xl border border-line bg-surface" />}>
           <SearchBar placeholder={`Search ${tab.label.toLowerCase()}…`} />
         </Suspense>
       </div>
 
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-          <h1 className="text-xl font-bold text-fg sm:text-2xl">{tab.label}</h1>
-          <p className="text-sm text-muted">{tab.blurb}</p>
+      <div className="flex flex-col gap-4 pt-1">
+        <div>
+          <h1 className="text-3xl font-bold leading-tight text-fg sm:text-4xl">{tab.label}</h1>
+          <p className="mt-1.5 text-sm text-muted sm:text-base">{tab.blurb}</p>
         </div>
         <FilterChips tab={tab.slug} q={q} active={filters} />
         <HiddenVendors
@@ -85,7 +90,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
       {rest.length > 0 || folded ? (
         <section aria-label={`${tab.label} list`}>
-          <p className="mb-3 text-xs text-muted" aria-live="polite">
+          <p className="mb-3 font-mono text-[11px] uppercase tracking-wider text-muted" aria-live="polite">
             {deals.length} active deal{deals.length === 1 ? "" : "s"}
             {tab.category === "free_trial" && " · sorted longest to shortest"}
             {claimedHere > 0 && (
@@ -94,7 +99,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
                 <Link
                   href={buildHref({ tab: tab.slug, q, filters, showClaimed: !showClaimed })}
                   scroll={false}
-                  className="text-fg underline-offset-4 hover:underline"
+                  className="font-sans text-xs normal-case tracking-normal text-fg underline-offset-4 hover:underline"
                 >
                   {showClaimed ? `Hide ${claimedHere} claimed` : `Show ${claimedHere} claimed`}
                 </Link>

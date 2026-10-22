@@ -13,6 +13,13 @@ export const uniqueEmail = (label: string) =>
 export const dealCard = (page: Page, title: string) =>
   page.locator("article, section[aria-labelledby^='hero-']").filter({ has: page.getByRole("heading", { name: title }) });
 
+/** Opens a deal's ⋯ menu (hide vendor, report a problem) and returns the card. */
+export async function openCardMenu(page: Page, title: string) {
+  const card = dealCard(page, title);
+  await card.getByRole("button", { name: `More options for ${title}` }).click();
+  return card;
+}
+
 /**
  * Each test gets its own "IP" so the per-visitor sign-in email limit (5/hour)
  * doesn't leak between tests. The app reads x-forwarded-for, as on Vercel.

@@ -1,12 +1,12 @@
 import { expect, test } from "@playwright/test";
-import { admin, dealCard, signIn, uniqueEmail, userIdFor } from "./helpers";
+import { admin, openCardMenu, signIn, uniqueEmail, userIdFor } from "./helpers";
 
 test.describe("signed-in visitor", () => {
   test("guest claims and hidden vendors move into the account on sign-in", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: /^Mark claimed\W+E2E Free Pizza Slice$/ }).click();
     await expect(page.getByRole("heading", { name: "E2E Free Pizza Slice" })).toHaveCount(0);
-    await dealCard(page, "E2E Free Sample Box").getByRole("button", { name: "Hide E2E Samples" }).click();
+    await (await openCardMenu(page, "E2E Free Sample Box")).getByRole("button", { name: "Hide E2E Samples" }).click();
     await page.getByRole("button", { name: "Hide", exact: true }).click();
     await expect(page.getByRole("button", { name: "Show E2E Samples deals again" })).toBeVisible();
 

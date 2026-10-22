@@ -42,8 +42,8 @@ export default function WhatQualifiesPage() {
   return (
     <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 pb-16 pt-8">
       <header>
-        <p className="text-sm font-medium text-emerald-300">How {SITE_NAME} works</p>
-        <h1 className="mt-1 text-3xl font-bold tracking-tight text-fg">What qualifies</h1>
+        <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-emerald-300">How {SITE_NAME} works</p>
+        <h1 className="mt-2 text-3xl font-bold leading-tight text-fg sm:text-4xl">What qualifies</h1>
         <p className="mt-3 max-w-prose text-muted">
           Most deal sites list everything and leave the fine print to you. We do the opposite: a deal only appears here
           if it passes every rule below. Fewer deals, zero catches.

@@ -8,10 +8,13 @@ export function TabNav({
   active,
   q,
   filters,
+  counts,
 }: {
   active: TabSlug;
   q?: string;
   filters: FilterSlug[];
+  /** Deals each tab would show right now (same search and filters). */
+  counts: Record<TabSlug, number>;
 }) {
   return (
     <nav aria-label="Deal categories" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
@@ -32,6 +35,14 @@ export function TabNav({
                 <Icon aria-hidden className="size-4" />
                 <span className="sm:hidden">{tab.shortLabel}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
+                <span
+                  className={`rounded-md px-1.5 py-px font-mono text-[11px] tabular-nums ${
+                    isActive ? "bg-bg/10 text-bg/70" : "bg-white/5 text-muted"
+                  }`}
+                >
+                  {counts[tab.slug]}
+                  <span className="sr-only"> deals</span>
+                </span>
               </Link>
             </li>
           );

@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
-import { dealCard, expectNoA11yViolations, signIn, uniqueEmail } from "./helpers";
+import { expectNoA11yViolations, openCardMenu, signIn, uniqueEmail } from "./helpers";
 
 const PAGES = [
   ["home feed", "/"],
@@ -25,9 +25,9 @@ for (const viewport of [null, { width: 1280, height: 900 }]) {
     test("open folder, report form and hide confirm have no violations", async ({ page }) => {
       await page.goto("/");
       await page.locator("summary", { hasText: "Free itch.io games" }).click();
-      const pizza = dealCard(page, "E2E Free Pizza Slice");
+      const pizza = await openCardMenu(page, "E2E Free Pizza Slice");
       await pizza.getByText("Report a problem").click();
-      await dealCard(page, "E2E Free Sample Box").getByRole("button", { name: "Hide E2E Samples" }).click();
+      await (await openCardMenu(page, "E2E Free Sample Box")).getByRole("button", { name: "Hide E2E Samples" }).click();
       await expectNoA11yViolations(page, `interactive states (${size})`);
     });
   });

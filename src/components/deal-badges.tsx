@@ -3,29 +3,31 @@ import type { Deal } from "@/lib/types";
 
 export type BadgeKind = "no-card" | "card-required" | "account" | "instant-cancel";
 
-export const BADGES: Record<BadgeKind, { label: string; icon: LucideIcon; className: string; help: string }> = {
+/** `tone` tints the icon; only "card required" also tints its text, since that's the one to notice. */
+export const BADGES: Record<BadgeKind, { label: string; icon: LucideIcon; tone: string; text?: string; help: string }> = {
   "no-card": {
     label: "No Credit Card Required",
     icon: CreditCard,
-    className: "bg-emerald-500/12 text-emerald-300 ring-emerald-400/25",
+    tone: "bg-emerald-400/15 text-emerald-300",
     help: "You never enter a payment method.",
   },
   account: {
     label: "Account Required",
     icon: UserRound,
-    className: "bg-amber-500/12 text-amber-300 ring-amber-400/25",
+    tone: "bg-amber-400/15 text-amber-300",
     help: "Needs a free sign-up or app login.",
   },
   "instant-cancel": {
     label: "Instant-Cancel Safe",
     icon: ShieldCheck,
-    className: "bg-sky-500/12 text-sky-300 ring-sky-400/25",
+    tone: "bg-sky-400/15 text-sky-300",
     help: "Cancel right after signing up and keep the full trial.",
   },
   "card-required": {
     label: "Card Required at Signup",
     icon: CreditCard,
-    className: "bg-rose-500/10 text-rose-300 ring-rose-400/25",
+    tone: "bg-rose-400/15 text-rose-300",
+    text: "text-rose-200",
     help: "Asks for a card up front. Set a reminder or cancel immediately.",
   },
 };
@@ -38,12 +40,12 @@ export function badgesFor(deal: Deal): BadgeKind[] {
 }
 
 export function Badge({ kind }: { kind: BadgeKind }) {
-  const { label, icon: Icon, className } = BADGES[kind];
+  const { label, icon: Icon, tone, text } = BADGES[kind];
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${className}`}
-    >
-      <Icon aria-hidden className="size-3" />
+    <span className={`inline-flex items-center gap-1.5 text-xs font-medium ${text ?? "text-fg/85"}`}>
+      <span className={`grid size-[18px] place-items-center rounded-full ${tone}`}>
+        <Icon aria-hidden className="size-[11px]" />
+      </span>
       {label}
     </span>
   );
@@ -51,7 +53,7 @@ export function Badge({ kind }: { kind: BadgeKind }) {
 
 export function DealBadges({ deal }: { deal: Deal }) {
   return (
-    <ul className="flex flex-wrap gap-1.5" aria-label="Deal requirements">
+    <ul className="flex flex-wrap gap-x-4 gap-y-2" aria-label="Deal requirements">
       {badgesFor(deal).map((kind) => (
         <li key={kind}>
           <Badge kind={kind} />
