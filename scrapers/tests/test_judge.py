@@ -72,9 +72,11 @@ class ApplyJudgeTest(unittest.TestCase):
         good, bad = lead("good"), lead("bad")
         verdicts = [GOOD, {**GOOD, "qualifies": False, "rejection_reason": "contest"}]
         with mock.patch.object(judge, "call_judge", side_effect=verdicts):
-            to_publish, _ = apply_judge([good, bad], "publish", [])
+            to_publish, tally = apply_judge([good, bad], "publish", [])
         self.assertEqual([l["title"] for l, _ in to_publish], ["good"])
         self.assertEqual((bad["status"], bad["review_note"]), ("rejected", "ai: contest"))
+        # The run summary says "approved" here, not shadow mode's "would publish".
+        self.assertEqual(dict(tally), {"approved": 1, "ai: contest": 1})
 
     def test_api_errors_leave_lead_pending_and_report_once(self):
         errors: list[str] = []

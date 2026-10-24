@@ -64,7 +64,9 @@ def apply_judge(leads: list[dict], mode: str, errors: list[str]) -> tuple[list[t
             ai_model=judge.MODEL,
             ai_judged_at=datetime.now(timezone.utc).isoformat(),
         )
-        tally["would publish" if deal else reason] += 1
+        # Shadow mode only records; in publish mode an approval is published below
+        # (logged as "auto-published"), unless the same brand link is already live.
+        tally[("approved" if mode == "publish" else "would publish") if deal else reason] += 1
         if mode != "publish":
             continue
         if deal:
