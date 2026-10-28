@@ -164,3 +164,13 @@ class BatchesTest(unittest.TestCase):
             for row in batch:
                 self.assertNotIn(None, row.values())
                 self.assertFalse(any(k.startswith("_") for k in row))
+
+
+class RssSourcesTest(unittest.TestCase):
+    def test_sources_are_https_with_key_safe_names(self):
+        from scrapers.sources import RSS_SOURCES
+
+        for source in RSS_SOURCES:
+            self.assertTrue(source.url.startswith("https://"), source.url)
+            # The name becomes the source column and the "name:" source_key prefix.
+            self.assertRegex(source.name, r"^[a-z0-9]+$")

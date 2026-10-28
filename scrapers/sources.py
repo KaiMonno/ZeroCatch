@@ -1,6 +1,7 @@
 """RSS feeds the blog scraper reads. Every entry must permit automated access in its
-robots.txt (checked at runtime in fetch.py). Blogs and forums are lead sources
-only: a human verifies each lead and links the brand's own page, never the blog.
+robots.txt (checked at runtime in fetch.py). Blogs are lead sources only: the
+inclusion rules and the AI judge vet each lead, and a published deal links the
+brand's own page, never the blog.
 
 Sources ruled out (2026-10):
 - Slickdeals forums: Terms of Service (Mar 2026) prohibit any automated access
@@ -9,7 +10,9 @@ Sources ruled out (2026-10):
 - Hey It's Free, Mojo Savings, Penny Pinchin' Mom: robots.txt blocks the feeds.
 - Business Wire and GlobeNewswire RSS: robots.txt disallows their feeds for bots.
 - Slickdeals Freebies RSS: robots.txt disallows /newsearch.php?*rss=* for all bots.
-- The Freebie Guy: feeds return 403 to non-browser clients.
+- The Freebie Guy: allowed, but nearly every post is a roundup (re-checked 2026-10-27).
+- IsThereAnyDeal API: deal links are its own redirects and giveaway links are
+  affiliate-tracked; its terms forbid altering the data and competing apps.
 - Reddit: robots.txt blocks all crawlers; the API needs approval and bans commercial use.
 """
 
@@ -37,8 +40,15 @@ RSS_SOURCES: list[Source] = [
     # Freebie blogs whose robots.txt and terms permit automated reading
     # (checked 2026-10-13). Leads only: the AI judge verifies each one, and the
     # published deal links the brand's own page, never the blog.
+    # I Crave Freebies now posts only every few weeks; harmless to keep.
     Source(name="icravefreebies", url="https://www.icravefreebies.com/feed/"),
     Source(name="moneysavingmom", url="https://www.moneysavingmom.com/category/freebies/feed/"),
+    # Added 2026-10-27: robots.txt allows the feeds and articles, and neither site
+    # has terms restricting automated access. A dry run of the rules over one
+    # week gave ~4 leads (Free Stuff Finder's freebies category; its main feed
+    # is mostly coupons) and ~2 (Freebie Shark, which has no category feed).
+    Source(name="freestufffinder", url="https://www.freestufffinder.com/category/freebies/feed/"),
+    Source(name="freebieshark", url="https://freebieshark.com/feed/"),
     #
     # First-party announcements: brands post national freebies here. Rare
     # (a few a month) but exact, dated, and linking to the brand. The two

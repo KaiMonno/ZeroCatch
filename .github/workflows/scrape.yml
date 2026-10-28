@@ -51,9 +51,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Repository variable: "off", "shadow" (record verdicts only) or "publish".
           AI_JUDGE_MODE: ${{ vars.AI_JUDGE_MODE || 'shadow' }}
-          # Optional: without these the Instagram source is skipped.
-          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}
+          # Instagram is disabled (2026-10-27): brand feeds gave 0 leads and every
+          # real brand freebie was already on the blogs. To re-enable, pass
+          # INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_USER_ID secrets here again.
 
       - name: Send deal alerts
         # Runs even if a source failed: whatever was published is already saved.
