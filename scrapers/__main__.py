@@ -17,11 +17,13 @@ import sys
 from collections import Counter
 from collections.abc import Callable
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 from . import judge, supabase_rest
 from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
 from .epic import fetch_epic_deals
+from .links import _host_matches
 from . import gog, instagram, itch, steam, trials
 
 
@@ -42,6 +44,11 @@ def _run(name: str, collector: Callable[[], object], warnings: list[str], defaul
         return default
 
 
+# Stores whose free games come straight from their own sources (epic, steam,
+# gog, itch): blog leads pointing at them are duplicates.
+FIRST_PARTY_STORES = ("epicgames.com", "steampowered.com", "gog.com", "itch.io")
+
+
 def apply_judge(leads: list[dict], mode: str, errors: list[str]) -> tuple[list[tuple[dict, dict]], Counter]:
     """Judge blog/press leads in place. Returns (lead, deal) pairs to publish
     (only in publish mode) and a tally of outcomes for the log."""
@@ -57,6 +64,10 @@ def apply_judge(leads: list[dict], mode: str, errors: list[str]) -> tuple[list[t
             if tally["error"] == 1:
                 errors.append(f"judge: {err}")
             continue  # stays a plain pending lead
+        if deal and _host_matches(urlsplit(deal["url"]).netloc.lower(), FIRST_PARTY_STORES):
+            # Blogs repost store giveaways we already publish first-hand, with
+            # exact dates and per-game links; a store-homepage copy would duplicate them.
+            deal, reason = None, "covered by a first-party source"
         index = verdict.get("brand_link_index", -1)
         brand_url = lead["_links"][index][0] if isinstance(index, int) and 0 <= index < len(lead["_links"]) else None
         lead.update(

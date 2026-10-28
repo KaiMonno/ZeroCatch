@@ -78,6 +78,16 @@ class ApplyJudgeTest(unittest.TestCase):
         # The run summary says "approved" here, not shadow mode's "would publish".
         self.assertEqual(dict(tally), {"approved": 1, "ai: contest": 1})
 
+    def test_store_giveaways_we_track_first_hand_are_not_republished(self):
+        # A blog's "free games on Epic" post links the store homepage; the Epic
+        # source already publishes those games with per-game links.
+        epic = {**lead("Free horror games from Epic"), "_links": [("https://store.epicgames.com/en-US/", "Epic Games")]}
+        with mock.patch.object(judge, "call_judge", return_value={**GOOD, "merchant": "Epic Games"}):
+            to_publish, tally = apply_judge([epic], "publish", [])
+        self.assertEqual(to_publish, [])
+        self.assertEqual((epic["status"], epic["review_note"]), ("rejected", "covered by a first-party source"))
+        self.assertEqual(dict(tally), {"covered by a first-party source": 1})
+
     def test_api_errors_leave_lead_pending_and_report_once(self):
         errors: list[str] = []
         leads = [lead("a"), lead("b")]
