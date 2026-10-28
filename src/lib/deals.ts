@@ -67,6 +67,25 @@ export function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQu
   });
 }
 
+const isEpic = (d: Deal) => d.source_key?.startsWith("epic:") ?? false;
+
+/**
+ * The featured spot at the top of Pure Freebies. Epic's weekly free games are
+ * reliable but always there, so they're the fallback rather than the default:
+ *   1. deals an admin featured by hand (other than Epic's automatic flag),
+ *   2. otherwise the most urgent other freebie (itch.io games excluded: they
+ *      have their own folder),
+ *   3. otherwise Epic's featured games, as before.
+ * Expects the list already sorted (sortDeals), so the first candidate ends soonest.
+ */
+export function pickHeroes(deals: Deal[]): Deal[] {
+  const handPicked = deals.filter((d) => d.is_hero_featured && !isEpic(d));
+  if (handPicked.length) return handPicked;
+  const other = deals.find((d) => !isEpic(d) && d.merchant !== ITCH_MERCHANT);
+  if (other) return [other];
+  return deals.filter((d) => d.is_hero_featured);
+}
+
 /** itch.io games are plentiful but small: they always sort after everything else. */
 export const ITCH_MERCHANT = "itch.io";
 const sourceRank = (d: Deal) => (d.merchant === ITCH_MERCHANT ? 1 : 0);

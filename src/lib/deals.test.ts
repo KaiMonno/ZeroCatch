@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { filterDeals, sortDeals } from "./deals";
+import { filterDeals, pickHeroes, sortDeals } from "./deals";
 import type { Deal } from "./types";
 
 const NOW = Date.parse("2026-10-20T12:00:00Z");
@@ -103,5 +103,33 @@ describe("sortDeals", () => {
     const before = titles(deals);
     sortDeals(deals);
     expect(titles(deals)).toEqual(before);
+  });
+});
+
+describe("pickHeroes", () => {
+  const epic = (title: string) => deal({ title, merchant: "Epic Games", source_key: `epic:${title}`, is_hero_featured: true, expires_at: at(72) });
+  const itch = deal({ title: "itch game", merchant: "itch.io", source_key: "itch:x", expires_at: at(2) });
+
+  it("keeps Epic's games as the hero when there's nothing else", () => {
+    expect(titles(pickHeroes(sortDeals([epic("Game A"), epic("Game B"), itch])))).toEqual(["Game A", "Game B"]);
+  });
+
+  it("features another freebie instead, the one ending soonest", () => {
+    const deals = sortDeals([
+      epic("Game A"),
+      itch,
+      deal({ title: "Burger, ends in a month", expires_at: at(24 * 30) }),
+      deal({ title: "Park day, ends tonight", expires_at: at(6) }),
+    ]);
+    expect(titles(pickHeroes(deals))).toEqual(["Park day, ends tonight"]);
+  });
+
+  it("prefers a deal featured by hand in the admin", () => {
+    const deals = sortDeals([epic("Game A"), deal({ title: "ends soon", expires_at: at(1) }), deal({ title: "Hand-picked", is_hero_featured: true })]);
+    expect(titles(pickHeroes(deals))).toEqual(["Hand-picked"]);
+  });
+
+  it("features nothing when the feed is empty", () => {
+    expect(pickHeroes([])).toEqual([]);
   });
 });

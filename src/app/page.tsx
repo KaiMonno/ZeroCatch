@@ -11,7 +11,7 @@ import { HiddenVendors } from "@/components/hidden-vendors";
 import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
 import { getViewer } from "@/lib/claims";
-import { ITCH_MERCHANT, getDeals } from "@/lib/deals";
+import { ITCH_MERCHANT, getDeals, pickHeroes } from "@/lib/deals";
 import { SITE_NAME } from "@/lib/site";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { TABS, buildHref, parseFilters, resolveTab, type TabSlug } from "@/lib/tabs";
@@ -50,9 +50,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const claimedHere = matching.filter((d) => claimed.has(d.id)).length;
   const deals = showClaimed ? matching : matching.filter((d) => !claimed.has(d.id));
 
-  // The hero spotlight only exists on the home feed.
-  const heroes = tab.category === "pure_freebie" ? deals.filter((d) => d.is_hero_featured) : [];
-  const listed = heroes.length ? deals.filter((d) => !d.is_hero_featured) : deals;
+  // The hero spotlight only exists on the home feed (see pickHeroes for who gets it).
+  const heroes = tab.category === "pure_freebie" ? pickHeroes(deals) : [];
+  const heroIds = new Set(heroes.map((d) => d.id));
+  const listed = deals.filter((d) => !heroIds.has(d.id));
   // Several itch.io giveaways collapse into one folder so they can't crowd the feed.
   const itch = listed.filter((d) => d.merchant === ITCH_MERCHANT);
   const folded = itch.length >= ITCH_FOLDER_MIN;
