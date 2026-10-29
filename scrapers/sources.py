@@ -28,14 +28,14 @@ class Source:
 
 
 RSS_SOURCES: list[Source] = [
-    # Hip2Save is paused (2026-10): ~1% of its posts meet the inclusion rules and
-    # most survivors lack a clean brand link. Re-enable by uncommenting.
-    # Source(
-    #     name="hip2save",
-    #     url="https://hip2save.com/category/freebies/feed/",
-    #     trusted_categories=frozenset({"Legit Freebies & Samples"}),
-    # ),
-    # Source(name="hip2save", url="https://hip2save.com/feed/"),
+    # Hip2Save: freebies category only (re-enabled 2026-10-28). Paused earlier
+    # when every lead needed a human check; the AI judge now rejects its many
+    # "free with purchase" posts. The main feed (~1% freebies) stays off.
+    Source(
+        name="hip2save",
+        url="https://hip2save.com/category/freebies/feed/",
+        trusted_categories=frozenset({"Legit Freebies & Samples"}),
+    ),
     #
     # Freebie blogs whose robots.txt and terms permit automated reading
     # (checked 2026-10-13). Leads only: the AI judge verifies each one, and the

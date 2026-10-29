@@ -7,6 +7,13 @@
 # - Spotify Premium: spotify.com/us/legal/premium-promotional-offer-terms (2026-10-04)
 # - LinkedIn Premium: linkedin.com/help/linkedin/answer/a545578 (2026-10-05)
 # - Walmart+: Walmart+ terms, "free-trial cancellations end access immediately" (2026-10-05)
+# - DashPass: DoorDash help, cancelling during a trial ends benefits immediately (2026-10-28)
+# - Grubhub+: terms, cancelling during the trial means immediate termination (2026-10-28)
+# - Uber One: benefits end when you cancel, except some partner promos (2026-10-28)
+# Not listed until official terms confirm access continues after cancelling (2026-10-28):
+#   Instacart+, Philo, Paramount+, Everand/Scribd, Google One (only partner-offer terms found).
+#   Dropbox Plus: help page says a card signup keeps the trial, but no individual
+#   free trial is currently offered on dropbox.com/plans.
 # Removed: Hulu (no longer offers a free trial, 2026-10-12).
 # Not offered: GitHub Copilot Pro (trials paused since 2026-04-10, "temporary",
 #   github.blog/changelog/2026-04-10-pausing-new-github-copilot-pro-trials). The
@@ -101,3 +108,33 @@ url = "https://www.skillshare.com/"
 duration_days = 7
 requires_credit_card = true
 verified = "2026-10-19: confirmed by hand (7-day trial; cancel keeps access until the trial ends)"
+
+[[trial]]
+key = "headspace"
+merchant = "Headspace"
+title = "Headspace: 14-Day Free Trial"
+description = "Guided meditation, sleep sounds and focus music for 14 days on the annual plan. Card required at signup. Cancel right away and keep access until the trial ends."
+url = "https://www.headspace.com/subscriptions"
+duration_days = 14
+requires_credit_card = true
+verified = "2026-10-28: cancel-and-keep confirmed by hand; headspace.com/subscriptions shows 'Try 14-days free' (annual plan)"
+
+[[trial]]
+key = "calm"
+merchant = "Calm"
+title = "Calm Premium: 14-Day Free Trial"
+description = "Sleep stories, meditations and music for 14 days. Start the trial on calm.com, not in the app store (Apple trials are 7 days). Card required at signup. Cancel right away and keep Premium until the trial ends."
+url = "https://www.calm.com/freetrial"
+duration_days = 14
+requires_credit_card = true
+verified = "2026-10-28: Calm Help Center, web free trial: 'you will keep your Premium access until the full trial period is over, even if you cancel immediately' (14 days at calm.com/freetrial)"
+
+[[trial]]
+key = "nintendo-switch-online"
+merchant = "Nintendo"
+title = "Nintendo Switch Online: 7-Day Free Trial"
+description = "Online play, cloud saves and the classic NES and SNES library for 7 days, once per Nintendo Account. Card required at signup. Turn off automatic renewal right away and the membership stays active until the trial ends."
+url = "https://www.nintendo.com/us/online/"
+duration_days = 7
+requires_credit_card = true
+verified = "2026-10-28: Nintendo support, 7-day trial needs a payment method, no charge if auto-renewal is off before it ends; Nintendo US membership page: 'your subscription will remain active until the end of its term'"
