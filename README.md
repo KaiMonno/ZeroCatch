@@ -7,7 +7,7 @@
 
 **Good-Faith Freebies:** a deal aggregator that only lists verified, no-strings-attached offers. No affiliate links, no "free with purchase", no trials that end the moment you cancel. New deals are found, checked and published every night with no manual work, for under $15 a year.
 
-![ZeroCatch home feed on desktop: two featured Epic Games giveaways with badges and expiry](docs/screenshots/desktop-feed.jpg)
+![ZeroCatch home feed on desktop: a featured free shampoo sample ticket with a $0.00 stamp, badges and a live countdown, above the deal grid](docs/screenshots/desktop-feed.jpg)
 
 ### See it in action
 
@@ -19,12 +19,12 @@
 
 | Pure Freebies | Instant-Cancel Trials | Grouped indie games |
 | :---: | :---: | :---: |
-| ![Phone view of the Pure Freebies feed](docs/screenshots/mobile-feed.jpg) | ![Trials tab sorted longest first, with Card Required and Instant-Cancel Safe badges](docs/screenshots/mobile-trials.jpg) | ![A folder collapsing 12 free itch.io games into one card](docs/screenshots/mobile-itch-folder.jpg) |
-| Free with no payment method. Epic's weekly games are featured. | Trials you can cancel on day one and keep for the full period, longest first. | Three or more itch.io giveaways fold into one card so they can't crowd the feed. |
+| ![Phone view of the Pure Freebies feed](docs/screenshots/mobile-feed.jpg) | ![Trials tab sorted longest first, with Card Required and Instant-Cancel Safe badges](docs/screenshots/mobile-trials.jpg) | ![A folder collapsing 15 free itch.io games into one card](docs/screenshots/mobile-itch-folder.jpg) |
+| Free with no payment method. The freebie ending soonest is featured. | Trials you can cancel on day one and keep for the full period, longest first. | Three or more itch.io giveaways fold into one card so they can't crowd the feed. |
 
 | Hide a vendor | Hidden vendors | Deal-alert email |
 | :---: | :---: | :---: |
-| ![Confirm prompt: Hide all Epic Games deals?](docs/screenshots/mobile-hide-confirm.jpg) | ![Feed with an Epic Games chip: Hiding 2 deals from Epic Games](docs/screenshots/mobile-hidden.jpg) | ![Nightly digest email listing five new deals with terms and end dates](docs/screenshots/alert-email.jpg) |
+| ![Confirm prompt: Hide all Epic Games deals?](docs/screenshots/mobile-hide-confirm.jpg) | ![Feed with an Epic Games chip: Hiding 1 deal from Epic Games](docs/screenshots/mobile-hidden.jpg) | ![Nightly digest email listing five new deals with terms and end dates](docs/screenshots/alert-email.jpg) |
 | Not into a store? Hide every deal from it, signed in or not. | Hidden vendors stay out of the feed and emails; tap a chip to bring one back. | Opt-in daily or weekly digests by topic, with one-click unsubscribe. |
 
 - **Badges on every deal:** card required or not, account required or not, instant-cancel safe, and a live countdown to the end date.

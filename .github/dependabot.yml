@@ -1,0 +1,32 @@
+# Security fixes open as soon as an advisory lands (enabled in the repo settings).
+# Routine version bumps come weekly, grouped, so they don't flood the PR list.
+# The scrapers use only the Python standard library, so there's nothing to track there.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # next and eslint-config-next are pinned and must move together.
+      next:
+        patterns: ["next", "eslint-config-next"]
+      dev-dependencies:
+        dependency-type: development
+        exclude-patterns: ["eslint-config-next"]
+        update-types: ["minor", "patch"]
+      dependencies:
+        dependency-type: production
+        exclude-patterns: ["next"]
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
