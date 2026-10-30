@@ -32,7 +32,7 @@ export default async function OpenGraphImage() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
-          <img src={logo} alt="" width={108} height={108} style={{ borderRadius: 6 }} />
+          <img src={logo} alt="" width={108} height={108} />
           <div style={{ fontSize: 72, fontWeight: 800 }}>{SITE_NAME}</div>
         </div>
         <div style={{ marginTop: 32, fontSize: 48, color: "#9aa3ae" }}>

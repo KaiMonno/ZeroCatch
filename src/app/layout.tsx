@@ -43,9 +43,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <OfflineBanner />
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
           <Link href="/" className="flex items-center gap-2 font-display text-xl font-bold tracking-tight text-fg">
-            {/* 36px pixel-art logo at 1:1 with no smoothing, so it stays crisp (2:1 on Retina). */}
+            {/* 36px pixel-art logo at 1:1 with no smoothing, so it stays crisp (2:1 on Retina). No rounded corners: the art runs to its edges. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- next/image would resample (blur) the pixel art */}
-            <img src="/logo.png" alt="" width={36} height={36} className="size-9 rounded-sm [image-rendering:pixelated]" />
+            <img src="/logo.png" alt="" width={36} height={36} className="size-9 [image-rendering:pixelated]" />
             ZeroCatch
           </Link>
           <div className="flex items-center gap-3">

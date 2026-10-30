@@ -12,7 +12,7 @@
  *
  * Bump VERSION when this file's caching rules change; old caches are dropped.
  */
-const VERSION = "v5"; // v5: recolored logo (icons keep their file names)
+const VERSION = "v6"; // v6: fixed logo, separate tab icon (icons keep their file names)
 const PAGES = `zc-pages-${VERSION}`;
 const ASSETS = `zc-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
