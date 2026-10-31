@@ -9,6 +9,10 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    ignore:
+      # Matches the Node version the site runs on (24); bump it with the runtime.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       # next and eslint-config-next are pinned and must move together.
       next:
