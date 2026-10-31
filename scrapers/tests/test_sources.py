@@ -69,7 +69,7 @@ class SteamTest(unittest.TestCase):
         self.assertEqual([(a, n) for a, n, _ in rows], [("111", "Cool & Game"), ("222", "Some DLC")])
 
     def test_full_game_is_published(self):
-        deal = build_deal("111", "Cool & Game", "https://store.steampowered.com/app/111/", {"type": "game"})
+        deal = build_deal("111", "Cool & Game", "https://store.steampowered.com/app/111/", {"type": "game", "price_overview": {"discount_percent": 100}})
         self.assertEqual(deal["source_key"], "steam:111")
         self.assertEqual(deal["title"], "Cool & Game: Free to Keep on Steam")
         self.assertIsNone(deal["expires_at"])  # the nightly sync handles removal
