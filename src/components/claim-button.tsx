@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, CheckCircle2, Undo2 } from "lucide-react";
-import { useTransition } from "react";
+import { useRef, useTransition } from "react";
 import { setClaimed } from "@/app/claim-actions";
 
 /**
@@ -12,18 +12,31 @@ import { setClaimed } from "@/app/claim-actions";
  */
 export function ClaimButton({ dealId, dealTitle, claimed }: { dealId: string; dealTitle: string; claimed: boolean }) {
   const [pending, startTransition] = useTransition();
-  const submit = (form: FormData) => startTransition(() => setClaimed(form));
+  const formRef = useRef<HTMLFormElement>(null);
+  const submit = (form: FormData) =>
+    startTransition(async () => {
+      // Claiming drops the deal from the feed (unless claimed deals are shown): fold the card away while it saves.
+      const leaves = !claimed && new URLSearchParams(location.search).get("claimed") !== "show";
+      const card = leaves ? formRef.current?.closest<HTMLElement>("article, section") : null;
+      card?.setAttribute("data-leaving", "");
+      try {
+        await setClaimed(form);
+      } finally {
+        // Normally the card is gone by now; if it's still here ("Show claimed", or the save failed), bring it back.
+        setTimeout(() => card?.removeAttribute("data-leaving"), 400);
+      }
+    });
 
   return (
-    <form action={submit} className="relative z-10">
+    <form ref={formRef} action={submit} className="relative z-10">
       <input type="hidden" name="deal_id" value={dealId} />
       <input type="hidden" name="claimed" value={claimed ? "false" : "true"} />
       {claimed ? (
         <button
           disabled={pending}
-          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-200 hover:bg-emerald-500/25 disabled:opacity-60"
+          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 px-2 py-1 text-xs font-medium text-emerald-200 transition hover:bg-emerald-500/25 active:scale-95 disabled:opacity-60"
         >
-          <CheckCircle2 aria-hidden className="size-3.5" />
+          <CheckCircle2 aria-hidden className="size-3.5 animate-pop" />
           Claimed
           <span className="sr-only">: {dealTitle}. Undo</span>
           <Undo2 aria-hidden className="ml-1 size-3" />
@@ -31,9 +44,9 @@ export function ClaimButton({ dealId, dealTitle, claimed }: { dealId: string; de
       ) : (
         <button
           disabled={pending}
-          className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-xs text-muted hover:border-line-strong hover:text-fg disabled:opacity-60"
+          className="group/mark inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-xs text-muted transition hover:border-line-strong hover:text-fg active:scale-95 disabled:opacity-60"
         >
-          <Check aria-hidden className="size-3.5" />
+          <Check aria-hidden className="size-3.5 transition-transform group-hover/mark:-rotate-12 group-hover/mark:scale-125" />
           {pending ? "Saving…" : "Mark claimed"}
           <span className="sr-only">: {dealTitle}</span>
         </button>

@@ -22,13 +22,13 @@ export function FilterChips({
               href={buildHref({ tab, q, filters: next })}
               scroll={false}
               aria-current={on ? "true" : undefined}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
                 on
                   ? "border-emerald-400/50 bg-emerald-400/15 text-emerald-200"
                   : "border-line bg-surface/60 text-muted hover:border-line-strong hover:text-fg"
               }`}
             >
-              {on && <Check aria-hidden className="size-3.5" />}
+              {on && <Check aria-hidden className="size-3.5 animate-pop" />}
               {f.label}
             </Link>
           </li>

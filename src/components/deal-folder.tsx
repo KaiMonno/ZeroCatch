@@ -1,6 +1,7 @@
 import { ChevronDown, Folder } from "lucide-react";
 import type { Deal } from "@/lib/types";
 import { DealCard } from "./deal-card";
+import { stagger } from "@/lib/stagger";
 import { ExpiryLabel } from "./expiry-label";
 
 /**
@@ -25,11 +26,11 @@ export function DealFolder({
   );
   return (
     <details className="group/folder rounded-2xl border border-line bg-surface open:border-line-strong">
-      <summary className="flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 hover:bg-surface-2 sm:gap-4 [&::-webkit-details-marker]:hidden">
+      <summary className="group/summary flex cursor-pointer list-none items-center gap-3 rounded-2xl p-4 hover:bg-surface-2 sm:gap-4 [&::-webkit-details-marker]:hidden">
         {/* A small stack of "tickets": this card holds several deals. */}
         <span aria-hidden className="relative grid size-11 shrink-0 place-items-center">
-          <span className="absolute inset-0 translate-x-1 -translate-y-1 rotate-6 rounded-xl border border-line-strong bg-surface-2" />
-          <span className="relative grid size-11 place-items-center rounded-xl border border-line-strong bg-surface-2 text-muted">
+          <span className="absolute inset-0 translate-x-1 -translate-y-1 rotate-6 rounded-xl border border-line-strong bg-surface-2 transition-transform duration-300 group-hover/summary:translate-x-1.5 group-hover/summary:-translate-y-1.5 group-hover/summary:rotate-12 group-open/folder:rotate-12" />
+          <span className="relative grid size-11 place-items-center rounded-xl border border-line-strong bg-surface-2 text-muted transition-transform duration-300 group-hover/summary:-rotate-3">
             <Folder className="size-5" />
           </span>
         </span>
@@ -61,8 +62,9 @@ export function DealFolder({
         </span>
       </summary>
       <ul className="grid grid-cols-1 gap-3 border-t border-dashed border-line-strong p-3 sm:grid-cols-2 lg:grid-cols-3">
-        {deals.map((deal) => (
-          <li key={deal.id} className="flex">
+        {/* Rises in each time the folder opens: the list is only rendered while open. */}
+        {deals.map((deal, i) => (
+          <li key={deal.id} className="flex animate-rise" style={stagger(i, 35)}>
             <DealCard deal={deal} claimed={claimed.has(deal.id)} />
           </li>
         ))}

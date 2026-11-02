@@ -7,7 +7,7 @@ export function MerchantMark({ merchant, size = "size-7" }: { merchant: string; 
   return (
     <span
       aria-hidden
-      className={`grid ${size} shrink-0 place-items-center rounded-lg font-display text-sm font-bold`}
+      className={`grid ${size} shrink-0 place-items-center rounded-lg font-display text-sm font-bold transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110`}
       style={{ background: `hsl(${hue} 32% 18%)`, color: `hsl(${hue} 75% 78%)` }}
     >
       {initial}

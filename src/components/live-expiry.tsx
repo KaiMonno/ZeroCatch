@@ -37,7 +37,7 @@ export function LiveExpiry({ expiresAt, renderedAt }: { expiresAt: string | null
     <span
       className={`inline-flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider ${urgent ? "text-orange-300" : "text-muted"}`}
     >
-      <Clock aria-hidden className="size-3.5" />
+      <Clock aria-hidden className={`size-3.5 ${urgent ? "animate-tick" : ""}`} />
       {expiresAt ? (
         <time dateTime={expiresAt} title={new Date(expiresAt).toUTCString()}>
           {label}

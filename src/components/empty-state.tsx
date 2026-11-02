@@ -24,7 +24,7 @@ export function EmptyState({
   if (narrowed) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-        <SearchX aria-hidden className="size-8 text-muted" />
+        <SearchX aria-hidden className="size-8 animate-float text-muted" />
         <div>
           <p className="font-medium text-fg">{q ? <>Nothing matches &ldquo;{q}&rdquo;</> : "No deals match these filters"}</p>
           <p className="mt-1 text-sm text-muted">Try a broader search, or check the other tab.</p>
@@ -46,7 +46,7 @@ export function EmptyState({
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-line px-6 py-12 text-center">
-      <Hourglass aria-hidden className="size-8 text-muted" />
+      <Hourglass aria-hidden className="size-8 animate-float text-muted" />
       <div>
         <p className="font-medium text-fg">{hiddenCount > 0 ? "Nothing else here right now" : "Nothing qualifies right now"}</p>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted">

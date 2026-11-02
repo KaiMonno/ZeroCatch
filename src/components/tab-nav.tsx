@@ -28,11 +28,11 @@ export function TabNav({
                 href={buildHref({ tab: tab.slug, q, filters })}
                 aria-current={isActive ? "page" : undefined}
                 scroll={false}
-                className={`flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                className={`group/tab flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition active:scale-[0.98] ${
                   isActive ? "bg-fg text-bg" : "text-muted hover:bg-white/5 hover:text-fg"
                 }`}
               >
-                <Icon aria-hidden className="size-4" />
+                <Icon aria-hidden className="size-4 group-hover/tab:animate-wiggle" />
                 <span className="sm:hidden">{tab.shortLabel}</span>
                 <span className="hidden sm:inline">{tab.label}</span>
                 <span
@@ -40,7 +40,9 @@ export function TabNav({
                     isActive ? "bg-bg/10 text-bg/70" : "bg-white/5 text-muted"
                   }`}
                 >
-                  {counts[tab.slug]}
+                  <span key={counts[tab.slug]} className="inline-block animate-pop">
+                    {counts[tab.slug]}
+                  </span>
                   <span className="sr-only"> deals</span>
                 </span>
               </Link>

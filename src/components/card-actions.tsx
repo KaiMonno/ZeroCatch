@@ -39,14 +39,14 @@ export function CardActions({
             aria-controls={panelId}
             aria-label={`More options for ${dealTitle}`}
             onClick={() => setOpen((o) => !o)}
-            className={`grid size-8 place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-fg ${open ? "bg-white/5 text-fg" : ""}`}
+            className={`grid size-8 place-items-center rounded-lg text-muted transition hover:bg-white/5 hover:text-fg active:scale-90 ${open ? "bg-white/5 text-fg" : ""}`}
           >
-            <MoreHorizontal aria-hidden className="size-4" />
+            <MoreHorizontal aria-hidden className={`size-4 transition-transform duration-300 ${open ? "rotate-90" : ""}`} />
           </button>
         </div>
       </div>
       {/* Kept mounted while closed so a half-written report isn't lost. */}
-      <div id={panelId} hidden={!open} className="mt-3 flex flex-col items-start gap-3 rounded-xl bg-bg/60 p-3">
+      <div id={panelId} hidden={!open} className="mt-3 flex animate-drop flex-col items-start gap-3 rounded-xl bg-bg/60 p-3">
         <HideVendorButton merchant={merchant} />
         <ReportDeal dealId={dealId} dealTitle={dealTitle} />
       </div>

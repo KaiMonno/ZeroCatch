@@ -13,10 +13,10 @@ export function HiddenVendors({ vendors, label = "Hidden:" }: { vendors: string[
           <input type="hidden" name="hidden" value="false" />
           <button
             aria-label={`Show ${merchant} deals again`}
-            className="inline-flex items-center gap-1 rounded-full border border-line px-2.5 py-1 text-fg hover:border-line-strong hover:bg-white/5"
+            className="group/chip inline-flex animate-pop items-center gap-1 rounded-full border border-line px-2.5 py-1 text-fg transition hover:border-line-strong hover:bg-white/5 active:scale-95"
           >
             {merchant}
-            <X aria-hidden className="size-3 text-muted" />
+            <X aria-hidden className="size-3 text-muted transition-transform duration-200 group-hover/chip:rotate-90 group-hover/chip:text-fg" />
           </button>
         </form>
       ))}

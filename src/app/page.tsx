@@ -13,6 +13,7 @@ import { TabNav } from "@/components/tab-nav";
 import { getViewer } from "@/lib/claims";
 import { ITCH_MERCHANT, getDeals, pickHeroes } from "@/lib/deals";
 import { SITE_NAME } from "@/lib/site";
+import { stagger } from "@/lib/stagger";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { TABS, buildHref, parseFilters, resolveTab, type TabSlug } from "@/lib/tabs";
 
@@ -83,8 +84,10 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       {heroes.length > 0 && (
         // Epic often gives away two games at once: pair them on wider screens.
         <div className={`grid gap-3 ${heroes.length > 1 ? "lg:grid-cols-2" : ""}`}>
-          {heroes.map((deal) => (
-            <HeroCard key={deal.id} deal={deal} claimed={claimed.has(deal.id)} />
+          {heroes.map((deal, i) => (
+            <div key={deal.id} className="flex animate-rise" style={stagger(i)}>
+              <HeroCard deal={deal} claimed={claimed.has(deal.id)} />
+            </div>
           ))}
         </div>
       )}
@@ -109,13 +112,13 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </p>
           {/* grid-cols-1 = minmax(0, 1fr): long one-line text can't widen the column past the screen */}
           <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {rest.map((deal) => (
-              <li key={deal.id} className="flex">
+            {rest.map((deal, i) => (
+              <li key={deal.id} className="flex animate-rise" style={stagger(i + heroes.length)}>
                 <DealCard deal={deal} claimed={claimed.has(deal.id)} />
               </li>
             ))}
             {folded && (
-              <li className="min-w-0 sm:col-span-2 lg:col-span-3">
+              <li className="min-w-0 animate-rise sm:col-span-2 lg:col-span-3" style={stagger(rest.length + heroes.length)}>
                 <DealFolder title="Free itch.io games" blurb="Indie games, free to keep" deals={itch} claimed={claimed} />
               </li>
             )}

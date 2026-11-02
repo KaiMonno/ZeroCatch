@@ -17,6 +17,75 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), var(--font-geist-sans), ui-sans-serif, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+
+  /*
+   * Microanimations. Entrances use fill-mode "backwards" so they let go of
+   * translate/scale once done, leaving hover effects free to use them.
+   */
+  --animate-rise: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) backwards;
+  --animate-stamp: stamp 0.5s cubic-bezier(0.3, 1.6, 0.5, 1) 0.25s backwards;
+  --animate-pop: pop 0.35s cubic-bezier(0.3, 1.6, 0.5, 1) backwards;
+  --animate-drop: drop 0.18s ease-out;
+  --animate-shine: shine 0.8s ease-out;
+  --animate-tick: tick 2.4s ease-in-out infinite;
+  --animate-wiggle: wiggle 0.5s ease-in-out;
+  --animate-glitch: glitch 0.3s steps(1) 2;
+  --animate-float: float 3.2s ease-in-out infinite;
+
+  @keyframes rise {
+    from { opacity: 0; translate: 0 10px; }
+  }
+  /* Rubber-stamped onto the ticket: lands big, overshoots, settles at its tilt. */
+  @keyframes stamp {
+    0% { opacity: 0; scale: 1.9; rotate: -8deg; }
+    60% { opacity: 1; scale: 0.92; rotate: 10deg; }
+    100% { scale: 1; rotate: 7deg; }
+  }
+  @keyframes pop {
+    0% { opacity: 0; scale: 0.4; }
+    60% { opacity: 1; scale: 1.2; }
+  }
+  @keyframes drop {
+    from { opacity: 0; translate: 0 -4px; }
+  }
+  @keyframes shine {
+    from { left: -40%; opacity: 0; }
+    20% { opacity: 1; }
+    to { left: 120%; opacity: 0; }
+  }
+  /* A clock that's running out: a nervous twitch every couple of seconds. */
+  @keyframes tick {
+    0%, 82%, 100% { rotate: 0deg; }
+    86% { rotate: -14deg; }
+    91% { rotate: 10deg; }
+    96% { rotate: -4deg; }
+  }
+  @keyframes wiggle {
+    25% { rotate: -12deg; }
+    50% { rotate: 9deg; }
+    75% { rotate: -4deg; }
+  }
+  /* Pixel-art logo: jumps a pixel or two, like a CRT losing sync. */
+  @keyframes glitch {
+    0% { translate: -1px 1px; }
+    25% { translate: 2px -1px; }
+    50% { translate: -2px 0; }
+    75% { translate: 1px 1px; }
+    100% { translate: 0 0; }
+  }
+  @keyframes float {
+    0%, 100% { translate: 0 0; }
+    50% { translate: 0 -4px; }
+  }
+  @keyframes leave {
+    to { opacity: 0; scale: 0.96; translate: 0 6px; }
+  }
+}
+
+/* Set by "Mark claimed" while the claim saves: the card folds away. */
+[data-leaving] {
+  animation: leave 0.3s ease-in forwards;
+  pointer-events: none;
 }
 
 html {
@@ -45,5 +114,7 @@ h2 {
   *::after {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
   }
 }

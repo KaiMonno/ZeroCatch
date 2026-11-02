@@ -13,7 +13,7 @@ import { Perforation } from "./perforation";
  */
 export function DealCard({ deal, claimed = false }: { deal: Deal; claimed?: boolean }) {
   return (
-    <article className="group relative flex w-full flex-col gap-4 rounded-2xl border border-line bg-surface p-4 transition-colors hover:border-line-strong hover:bg-surface-2 has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-400">
+    <article className="group relative flex w-full flex-col gap-4 rounded-2xl border border-line bg-surface p-4 transition duration-200 hover:-translate-y-0.5 hover:border-line-strong hover:bg-surface-2 hover:shadow-[0_14px_30px_-18px_rgb(0_0_0/0.9)] has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-emerald-400">
       <div className="flex items-center gap-2.5">
         <MerchantMark merchant={deal.merchant} />
         <p className="min-w-0 flex-1 truncate text-xs font-medium text-muted">{deal.merchant}</p>

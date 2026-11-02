@@ -17,6 +17,8 @@ export default defineConfig({
     baseURL: BASE_URL,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Skips the entrance animations, so checks (and axe's contrast scan) see the settled page.
+    contextOptions: { reducedMotion: "reduce" },
   },
   // Mobile-first site: test at phone size. The accessibility spec also checks desktop.
   projects: [{ name: "mobile", use: { ...devices["Pixel 7"] } }],
