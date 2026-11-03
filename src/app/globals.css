@@ -29,7 +29,6 @@
   --animate-shine: shine 0.8s ease-out;
   --animate-tick: tick 2.4s ease-in-out infinite;
   --animate-wiggle: wiggle 0.5s ease-in-out;
-  --animate-glitch: glitch 0.3s steps(1) 2;
   --animate-float: float 3.2s ease-in-out infinite;
 
   @keyframes rise {
@@ -64,14 +63,6 @@
     25% { rotate: -12deg; }
     50% { rotate: 9deg; }
     75% { rotate: -4deg; }
-  }
-  /* Pixel-art logo: jumps a pixel or two, like a CRT losing sync. */
-  @keyframes glitch {
-    0% { translate: -1px 1px; }
-    25% { translate: 2px -1px; }
-    50% { translate: -2px 0; }
-    75% { translate: 1px 1px; }
-    100% { translate: 0 0; }
   }
   @keyframes float {
     0%, 100% { translate: 0 0; }

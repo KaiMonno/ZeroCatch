@@ -43,9 +43,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <OfflineBanner />
         <header className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 pt-5">
           <Link href="/" className="group/logo flex items-center gap-2 font-display text-xl font-bold tracking-tight text-fg">
-            {/* 36px pixel-art logo at 1:1 with no smoothing, so it stays crisp (2:1 on Retina). No rounded corners: the art runs to its edges. */}
+            {/* 36px pixel-art logo at 1:1 with no smoothing, so it stays crisp (2:1 on Retina). No rounded corners: the art runs to its edges.
+                On hover it lifts by whole pixels and glows; scaling or rotating would blur the pixels. */}
             {/* eslint-disable-next-line @next/next/no-img-element -- next/image would resample (blur) the pixel art */}
-            <img src="/logo.png" alt="" width={36} height={36} className="size-9 [image-rendering:pixelated] group-hover/logo:animate-glitch" />
+            <img src="/logo.png" alt="" width={36} height={36} className="size-9 transition-[translate,filter] duration-300 ease-out [image-rendering:pixelated] group-hover/logo:-translate-y-0.5 group-hover/logo:drop-shadow-[0_4px_10px_rgb(106_190_48/0.55)]" />
             ZeroCatch
           </Link>
           <div className="flex items-center gap-3">
