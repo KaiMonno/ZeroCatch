@@ -33,12 +33,14 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const tab = resolveTab(typeof sp.tab === "string" ? sp.tab : undefined);
   const q = typeof sp.q === "string" ? sp.q.trim() : undefined;
+  // Kept in links so they come back on the tabs that use them.
   const filters = parseFilters(sp.f);
+  const tabFilters = tab.hasFilters ? filters : [];
   const showClaimed = sp.claimed === "show";
 
   // The deal list is a shared cache; each visitor's hidden vendors and claims are applied on top.
   const [perTab, { claimed, hiddenVendors }] = await Promise.all([
-    Promise.all(TABS.map((t) => getDeals({ category: t.category, q, filters }))),
+    Promise.all(TABS.map((t) => getDeals({ category: t.category, q, filters: t.hasFilters ? filters : [] }))),
     getViewer(),
   ]);
   const found = perTab[TABS.findIndex((t) => t.slug === tab.slug)];
@@ -74,7 +76,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <h1 className="text-3xl font-bold leading-tight text-fg sm:text-4xl">{tab.label}</h1>
           <p className="mt-1.5 text-sm text-muted sm:text-base">{tab.blurb}</p>
         </div>
-        <FilterChips tab={tab.slug} q={q} active={filters} />
+        {tab.hasFilters && <FilterChips tab={tab.slug} q={q} active={filters} />}
         <HiddenVendors
           vendors={[...hiddenVendors].sort((a, b) => a.localeCompare(b))}
           label={hiddenHere > 0 ? `Hiding ${hiddenHere} deal${hiddenHere === 1 ? "" : "s"} from` : "Hidden:"}
@@ -125,7 +127,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </ul>
         </section>
       ) : (
-        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={filters} hiddenCount={hiddenHere} />
+        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={tabFilters} hiddenCount={hiddenHere} />
       )}
 
       <BadgeLegend />

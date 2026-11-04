@@ -61,6 +61,18 @@ test.describe("deal feed", () => {
     await expect(page.getByRole("heading", { name: "E2E Free Sample Box" })).toBeVisible();
   });
 
+  test("the trials tab has no filters and ignores the freebies' ones", async ({ page }) => {
+    await page.goto("/?f=no-card,no-account,ending-soon");
+    await page.getByRole("link", { name: /Trials/ }).click();
+    await expect(page).toHaveURL(/tab=trials/);
+    await expect(page.getByRole("list", { name: "Filters" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "E2E Long Trial" })).toBeVisible();
+
+    // Back on freebies, the filters are still on.
+    await page.getByRole("link", { name: /Freebies/ }).click();
+    await expect(page.getByRole("list", { name: "Filters" }).getByRole("link", { name: "No card" })).toHaveAttribute("aria-current", "true");
+  });
+
   test("a shared link restores the same view", async ({ page }) => {
     await page.goto("/?tab=trials&q=short");
     await expect(page.getByRole("searchbox", { name: "Search deals" })).toHaveValue("short");

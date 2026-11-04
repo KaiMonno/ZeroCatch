@@ -7,6 +7,7 @@ export const TABS = [
     label: "Pure Freebies",
     shortLabel: "Freebies",
     blurb: "100% free. No payment method, ever.",
+    hasFilters: true,
   },
   {
     slug: "trials",
@@ -14,6 +15,9 @@ export const TABS = [
     label: "Instant-Cancel Trials",
     shortLabel: "Trials",
     blurb: "Cancel on day one, keep the full trial. Longest first.",
+    // Every listed trial needs a card and an account and runs with no end date,
+    // so each filter would just empty the tab.
+    hasFilters: false,
   },
 ] as const satisfies readonly {
   slug: string;
@@ -21,6 +25,8 @@ export const TABS = [
   label: string;
   shortLabel: string;
   blurb: string;
+  /** Show the filter chips. Tabs without them ignore any filters in the URL. */
+  hasFilters: boolean;
 }[];
 
 export type Tab = (typeof TABS)[number];
