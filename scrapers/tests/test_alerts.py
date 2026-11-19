@@ -20,7 +20,7 @@ class TopicTest(unittest.TestCase):
         self.assertEqual(alerts.deal_topic(deal("2", "trial:hulu", "free_trial"), set(), set()), "trials")
         self.assertEqual(alerts.deal_topic(deal("3", "calendar:wawa-day:2027"), set(), {"wawa-day"}), "food")
         self.assertEqual(alerts.deal_topic(deal("4", merchant="Wendy's"), set(), set()), "food")
-        self.assertEqual(alerts.deal_topic(deal("5", "icravefreebies:9"), {"5"}, set()), "food")  # judge said food
+        self.assertEqual(alerts.deal_topic(deal("5", "moneysavingmom:9"), {"5"}, set()), "food")  # judge said food
         self.assertEqual(alerts.deal_topic(deal("6", "calendar:free-comic-book-day:2027"), set(), {"wawa-day"}), "other")
 
 

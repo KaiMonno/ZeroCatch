@@ -14,6 +14,10 @@ Sources ruled out (2026-10):
 - IsThereAnyDeal API: deal links are its own redirects and giveaway links are
   affiliate-tracked; its terms forbid altering the data and competing apps.
 - Reddit: robots.txt blocks all crawlers; the API needs approval and bans commercial use.
+
+Removed:
+- I Crave Freebies (2026-11-19): no new posts since Aug 27, and its feed
+  sometimes serves malformed XML.
 """
 
 from dataclasses import dataclass
@@ -40,8 +44,6 @@ RSS_SOURCES: list[Source] = [
     # Freebie blogs whose robots.txt and terms permit automated reading
     # (checked 2026-10-13). Leads only: the AI judge verifies each one, and the
     # published deal links the brand's own page, never the blog.
-    # I Crave Freebies now posts only every few weeks; harmless to keep.
-    Source(name="icravefreebies", url="https://www.icravefreebies.com/feed/"),
     Source(name="moneysavingmom", url="https://www.moneysavingmom.com/category/freebies/feed/"),
     # Added 2026-10-27: robots.txt allows the feeds and articles, and neither site
     # has terms restricting automated access. A dry run of the rules over one

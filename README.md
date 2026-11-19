@@ -108,7 +108,7 @@ Vercel Cron (~midnight PT) ─▶ GitHub Actions ─▶ scrapers/ ─▶ alert e
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
   │    Epic · Steam (no DLC) · GOG · itch.io · trials.toml · fixed-date calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
-  │    PR Newswire · Free Stuff Finder · Freebie Shark · Hip2Save · Money Saving Mom · I Crave Freebies   (AI_JUDGE_MODE: off / shadow / publish)
+  │    PR Newswire · Free Stuff Finder · Freebie Shark · Hip2Save · Money Saving Mom   (AI_JUDGE_MODE: off / shadow / publish)
   └─ review queue (/admin/review): variable-date calendar entries, judged leads while the judge is off
 Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ```
@@ -123,7 +123,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | itch.io sale feed | 100%-off games with an original price of at least $3.99 auto-publish, using the feed's exact `saleends` date |
 | PR Newswire | Inclusion rules, then the AI judge (or the review queue while the judge is off) |
 | Instagram brand accounts | **Disabled** (2026-10-27). It worked (all 25 brands readable via the Graph API), but brand feeds are memes and menu launches: 0 leads in two weeks, and every real brand freebie was already on the blogs. The code stays; passing the `INSTAGRAM_*` secrets to the scrape step in `scrape.yml` turns it back on |
-| Free Stuff Finder, Freebie Shark, Money Saving Mom, I Crave Freebies | Feeds (robots.txt and terms permit it) → rules → strict brand-link match → AI judge → auto-publish |
+| Free Stuff Finder, Freebie Shark, Money Saving Mom | Feeds (robots.txt and terms permit it) → rules → strict brand-link match → AI judge → auto-publish |
 | Hip2Save (freebies category) | Re-enabled with the AI judge: rules → brand link → judge, which rejects its frequent "free with purchase" posts. The main feed stays off (~1% of posts qualified) |
 
 **AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (the code default) records verdicts on the queue for comparison, and `publish` acts on them. **Production runs in `publish`** (since Oct 13): each nightly log shows `AI judge (publish, …)` with a tally of approvals and rejection reasons, then an `auto-published:` line for every deal that went live. Most nights read "no new leads", since only a handful of posts pass the keyword rules and a post is never judged twice. Without an `ANTHROPIC_API_KEY` secret the judge is off. Expected cost at ~6 new leads/day is about $14/year.
@@ -134,7 +134,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 - **Instagram:** `python -m scrapers.instagram --check` reports, for each brand in `scrapers/data/instagram_brands.toml`, whether the account was found and which recent posts look like freebies. Needs `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_USER_ID` (Meta Graph API business discovery, Standard Access, no App Review).
 - **Manual workflow options:** Actions → Scrape leads → Run workflow → `judge_check` (AI verdicts on current leads) or `instagram_check` (Instagram report). Neither writes anything.
 - **Scheduling:** Vercel Cron (`vercel.json`, free plan: within the hour) calls `/api/cron/scrape`, which starts the scrape workflow through GitHub's API. GitHub's own `schedule` stays as a backup, since it can run hours late. Needs `CRON_SECRET` and `GITHUB_DISPATCH_TOKEN` in Vercel.
-- **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads pending for 14 days, deletes deals expired over 90 days ago, prunes login-failure records.
+- **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads whose date has passed and leads pending for 14 days (calendar leads, queued 21 days ahead, wait until their date is over), deletes deals expired over 90 days ago, prunes login-failure and sign-in-email records.
 - **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
 
 ## Project layout
