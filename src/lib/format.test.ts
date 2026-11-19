@@ -20,8 +20,10 @@ describe("formatExpiry", () => {
     expect(formatExpiry(inHours(24 * 5), NOW)).toEqual({ label: "Expires in 5 days", urgent: false });
   });
 
-  it("shows a date beyond a week", () => {
-    expect(formatExpiry("2026-11-03T07:00:00Z", NOW)).toEqual({ label: "Ends Nov 3", urgent: false });
+  it("shows a date beyond a week, as the US (Pacific) calendar day", () => {
+    expect(formatExpiry("2026-11-03T20:00:00Z", NOW)).toEqual({ label: "Ends Nov 3", urgent: false });
+    // "Through Dec 31" ends at 11:59pm Pacific, 07:59 UTC on Jan 1.
+    expect(formatExpiry("2027-01-01T07:59:00Z", NOW)).toEqual({ label: "Ends Dec 31", urgent: false });
   });
 });
 

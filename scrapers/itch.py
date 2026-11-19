@@ -9,6 +9,7 @@ import time
 import xml.etree.ElementTree as ET
 from email.utils import parsedate_to_datetime
 
+from .dates import PACIFIC
 from .fetch import fetch
 
 FEED_URL = "https://itch.io/games/on-sale.xml?page={page}"
@@ -36,12 +37,13 @@ def parse_feed(xml_bytes: bytes, min_full_price: float = MIN_FULL_PRICE) -> list
         if full_price < min_full_price or not ends or not link.startswith("https://") or not title:
             continue
         expires = parsedate_to_datetime(ends)
+        until = expires.astimezone(PACIFIC)  # the US calendar day, as shown on the site
         deals.append(
             {
                 "source_key": f"{KEY_PREFIX}{link.removeprefix('https://')}",
                 "title": f"{title}: Free on itch.io"[:200],
                 "description": (
-                    f"Normally ${full_price:.2f}. Free to download and keep until {expires:%b} {expires.day}. "
+                    f"Normally ${full_price:.2f}. Free to download and keep until {until:%b} {until.day}. "
                     "No payment method needed; a free itch.io account is optional, for adding it to your library."
                 ),
                 "category": "pure_freebie",

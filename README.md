@@ -28,7 +28,7 @@
 | Not into a store? Hide every deal from it, signed in or not. | Hidden vendors stay out of the feed and emails; tap a chip to bring one back. | Opt-in daily or weekly digests by topic, with one-click unsubscribe. |
 
 - **Badges on every deal:** card required or not, account required or not, instant-cancel safe, and a live countdown to the end date.
-- **Search and filters in the URL** (`?tab=trials&q=…&f=no-card,ending-soon`), so every view can be shared and is rendered on the server.
+- **Search and filters in the URL** (`?q=…&f=no-card,ending-soon`, `?tab=trials&q=…`), so every view can be shared and is rendered on the server. The Trials tab has no filters: every listed trial needs a card and an account.
 - **Mark claimed:** claimed deals drop out of your feed. Works as a guest (cookie) and merges into your account when you sign in with Google.
 - **Report a problem:** three separate reports in a week hide a deal until it's reviewed.
 - **Installable PWA that works offline:** the app opens with the deals from your last visit (both tabs are saved on install), says how old they are, and keeps countdowns honest. Claims and hides made offline go through when the connection returns.
@@ -118,7 +118,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule |
 | `scrapers/data/trials.toml` | The file is the approval: listed trials publish, removed ones unpublish |
 | `scrapers/data/food_calendar.toml` | Recurring free days: food, plus National Park fee-free days, Free Comic Book Day and Museum Day. Fixed-date entries publish 21 days ahead (hidden until the day); "~" entries go to the queue to confirm the year's date |
-| Steam free-to-keep | Auto-published if Steam's API says it's a full game (DLC excluded); unpublished the night it leaves the free list |
+| Steam free-to-keep | Auto-published if Steam's API says it's a full game at 100% off right now (DLC excluded); the end date comes from the store page's "free to keep before…" notice, and anything without one is unpublished the night it leaves the free list |
 | GOG giveaway | Auto-published; unpublished the night the homepage banner is gone |
 | itch.io sale feed | 100%-off games with an original price of at least $3.99 auto-publish, using the feed's exact `saleends` date |
 | PR Newswire | Inclusion rules, then the AI judge (or the review queue while the judge is off) |

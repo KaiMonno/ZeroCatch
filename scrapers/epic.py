@@ -13,6 +13,7 @@ import json
 import re
 from datetime import datetime
 
+from .dates import PACIFIC
 from .fetch import fetch
 
 FEED_URL = (
@@ -52,7 +53,7 @@ def _free_windows(element: dict) -> list[tuple[str, str]]:
 
 
 def _end_label(iso: str) -> str:
-    when = datetime.fromisoformat(iso.replace("Z", "+00:00"))
+    when = datetime.fromisoformat(iso.replace("Z", "+00:00")).astimezone(PACIFIC)
     return f"{when:%b} {when.day}"
 
 

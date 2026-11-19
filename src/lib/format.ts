@@ -20,10 +20,11 @@ export function formatExpiry(expiresAt: string | null, now = Date.now()): Expiry
   if (days <= 7) {
     return { label: `Expires in ${days} day${days === 1 ? "" : "s"}`, urgent: days <= 2 };
   }
+  // US deal days end at 11:59pm Pacific, which is already the next day in UTC.
   const date = new Date(expiresAt).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
-    timeZone: "UTC",
+    timeZone: "America/Los_Angeles",
   });
   return { label: `Ends ${date}`, urgent: false };
 }
