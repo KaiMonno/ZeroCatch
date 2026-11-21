@@ -77,6 +77,8 @@ Every push runs three suites in CI ([`ci.yml`](.github/workflows/ci.yml)):
 | Accessibility (axe + keyboard) | part of `npm run test:e2e` | WCAG 2.2 A/AA scans of every page at phone and desktop size, including open menus and forms, plus keyboard-only navigation |
 | Scrapers | `python -m unittest discover -s scrapers/tests -t .` | Sources, rules, AI-judge guardrails, robots.txt parser, alert digests |
 
+`npm run typecheck` uses TypeScript 7 (the native compiler, installed as `@typescript/native`). The `typescript` package is an alias for TypeScript 6's compatibility build, because typescript-eslint and Next.js still import the TS 6 API; this is the [side-by-side setup](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/#running-side-by-side-with-typescript-6.0) TypeScript recommends. Lint runs on ESLint 10.
+
 Browser tests need Docker and the local stack, and never touch production (the config refuses a non-local Supabase URL):
 
 ```bash
