@@ -51,6 +51,9 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Repository variable: "off", "shadow" (record verdicts only) or "publish".
           AI_JUDGE_MODE: ${{ vars.AI_JUDGE_MODE || 'shadow' }}
+          # Emails the admin when leads are queued for review; skipped unless both are set.
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REVIEW_NOTIFY_EMAIL: ${{ secrets.REVIEW_NOTIFY_EMAIL }}
           # Instagram is disabled (2026-10-27): brand feeds gave 0 leads and every
           # real brand freebie was already on the blogs. To re-enable, pass
           # INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_USER_ID secrets here again.

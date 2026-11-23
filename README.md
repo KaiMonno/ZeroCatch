@@ -192,6 +192,7 @@ Deals appear and disappear on time no matter how often scrapers run, because `ac
 - **Sending** (`python -m scrapers.alerts`, after each nightly scrape) uses Resend's batch API from `alerts@zerocatch.dev`. A deal counts as new once it's visible, claimed deals are skipped, each subscriber gets at most one email per period, and every batch carries an `Idempotency-Key`. It's capped at 90 emails a run (Resend's free tier allows 100/day).
 - **Unsubscribe:** HMAC-signed links, plus RFC 8058 one-click `List-Unsubscribe` headers that mail apps POST to `/api/alerts/unsubscribe`. Links in the email go to `/unsubscribe`, which asks before acting so link scanners can't unsubscribe anyone.
 - Needs `RESEND_API_KEY` (GitHub) and the same `ALERTS_SIGNING_SECRET` in GitHub and Vercel; the send step skips quietly without them.
+- **Review notice for the admin:** when a night's run queues leads for `/admin/review`, one email lists them, calendar leads first with the day to confirm them by (a dated lead nobody sees in time is a missed freebie). Set the `REVIEW_NOTIFY_EMAIL` GitHub secret to turn it on; it reuses `RESEND_API_KEY`.
 
 ### Offline support (built)
 

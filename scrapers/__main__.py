@@ -9,7 +9,8 @@ free-to-keep games (no DLC), the GOG giveaway, itch.io 100%-off games, curated t
 (data/trials.toml), fixed-date calendar freebies.
 AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them;
 =off queues them): press-release and Instagram brand-post leads.
-Review queue: variable-date calendar entries.
+Review queue: variable-date calendar entries (the admin gets one email a
+night when new leads are waiting; see review_notice.py).
 """
 
 import argparse
@@ -19,7 +20,7 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from urllib.parse import urlsplit
 
-from . import judge, supabase_rest
+from . import judge, review_notice, supabase_rest
 from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
 from .epic import fetch_epic_deals
@@ -164,6 +165,7 @@ def main() -> int:
             print(f"Queued {len(inserted)} new leads ({len(leads) - len(new_leads)} already known)")
             # Several posts often cover one promotion: publish each brand link once.
             published_urls = supabase_rest.live_deal_urls() if to_publish else set()
+            auto_published: set[str] = set()
             for lead, deal in to_publish:
                 if lead["source_key"] not in inserted:
                     continue
@@ -172,7 +174,19 @@ def main() -> int:
                     continue
                 supabase_rest.approve_candidate(inserted[lead["source_key"]], deal)
                 published_urls.add(deal["url"])
+                auto_published.add(lead["source_key"])
                 print(f"  auto-published: {deal['title']}")
+            waiting = [
+                lead for lead in new_leads
+                if lead["source_key"] in inserted
+                and lead["source_key"] not in auto_published
+                and lead.get("status", "pending") == "pending"
+            ]
+            try:
+                print(f"Review notice: {review_notice.notify(waiting)}")
+            except Exception as err:
+                # The leads are saved either way; a failed email shouldn't fail the night.
+                warnings.append(f"review notice: {err}")
         except supabase_rest.SupabaseError as err:
             errors.append(f"queue leads: {err}")
         try:
