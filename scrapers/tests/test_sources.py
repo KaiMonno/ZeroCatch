@@ -1,14 +1,19 @@
 """Parser tests for the first-party sources, using synthetic payloads shaped
 like the real responses (2026-10)."""
 
+import json
+import os
 import unittest
+import urllib.parse
+from unittest import mock
 
-from scrapers.epic import parse_epic
+from scrapers import supabase_rest
+from scrapers.epic import fetch_epic_deals, parse_epic
 from scrapers.gog import parse_giveaway
 from scrapers.steam import build_deal, parse_search
 
 
-def epic_element(title, *, current=None, upcoming=None, pct=0, mappings=("game-abc123",), url_slug=None):
+def epic_element(title, *, current=None, upcoming=None, pct=0, mappings=("game-abc123",), url_slug=None, price=1999):
     def offers(window):
         return [{"promotionalOffers": [{"startDate": window[0], "endDate": window[1],
                                         "discountSetting": {"discountPercentage": pct}}]}] if window else []
@@ -16,6 +21,7 @@ def epic_element(title, *, current=None, upcoming=None, pct=0, mappings=("game-a
         "title": title, "id": "id1", "namespace": "ns1", "productSlug": None, "urlSlug": url_slug,
         "catalogNs": {"mappings": [{"pageSlug": s} for s in mappings]}, "offerMappings": [],
         "promotions": {"promotionalOffers": offers(current), "upcomingPromotionalOffers": offers(upcoming)},
+        "price": {"totalPrice": {"originalPrice": price}},
     }
 
 
@@ -52,6 +58,36 @@ class EpicTest(unittest.TestCase):
             epic_element("No page", current=NOW, mappings=(), url_slug="0123456789abcdef0123456789abcdef"),
         )
         self.assertEqual(parse_epic(payload), [])
+
+    def test_skips_free_to_play_games(self):
+        # Firestone (2026-11): $0 to begin with; Epic's "giveaway" is an in-game pack.
+        self.assertEqual(parse_epic(epic_payload(epic_element("Firestone", upcoming=NEXT, price=0))), [])
+
+    def test_an_empty_feed_is_an_error_not_a_sync(self):
+        # Syncing an empty list would unpublish this week's games.
+        with mock.patch("scrapers.epic.fetch", return_value=json.dumps(epic_payload()).encode()):
+            with self.assertRaises(RuntimeError):
+                fetch_epic_deals()
+
+
+class DeleteStaleDealsTest(unittest.TestCase):
+    def _query(self, **kwargs):
+        response = mock.MagicMock()
+        response.__enter__.return_value.read.return_value = b"[]"
+        env = {"SUPABASE_URL": "https://db.example", "SUPABASE_SERVICE_ROLE_KEY": "k"}
+        with mock.patch.dict(os.environ, env), mock.patch("urllib.request.urlopen", return_value=response) as urlopen:
+            supabase_rest.delete_stale_deals("epic:", ["epic:a"], **kwargs)
+        return urllib.parse.unquote(urlopen.call_args.args[0].full_url)
+
+    def test_running_only_keeps_ended_windows(self):
+        # Alien: Isolation (Nov 19-26) was swapped out while running: removed.
+        # Ended windows also leave Epic's feed, but they're history: kept.
+        self.assertIn("expires_at=gt.", self._query(running_only=True))
+
+    def test_default_removes_every_unlisted_deal(self):
+        url = self._query()
+        self.assertNotIn("expires_at", url)
+        self.assertIn('source_key=not.in.("epic:a")', url)
 
 
 STEAM_HTML = """

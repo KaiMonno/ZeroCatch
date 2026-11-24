@@ -4,6 +4,14 @@ Epic's own promotions feed is first-party and exact: titles, links, and start
 and end times come straight from the merchant, and every Epic freebie is
 account-only with no payment method. So these skip the review queue.
 
+Epic's feed is also the schedule, and Epic sometimes swaps a listed game
+before its week starts (2026: Alien: Isolation was announced for Nov 19, then
+replaced). So Epic is synced like Steam: a free window that's still running or
+upcoming but no longer listed is unpublished. Ended windows stay as history.
+
+Already-free games (free-to-play, original price $0) are skipped: Epic's
+"giveaway" for those is an in-game bonus pack, not a game to keep.
+
 Next week's games are listed in advance. They're inserted now with a future
 starts_at, and the active_deals view keeps them hidden until the moment the
 rotation happens, so the hero card turns over on time with no extra cron run.
@@ -21,6 +29,7 @@ FEED_URL = (
     "?locale=en-US&country=US&allowCountries=US"
 )
 STORE_URL = "https://store.epicgames.com/en-US/p/{slug}"
+KEY_PREFIX = "epic:"
 _HEX_ID = re.compile(r"^[0-9a-f]{32}$")
 
 
@@ -66,10 +75,12 @@ def parse_epic(payload: dict) -> list[dict]:
         # Holiday "Mystery Game" placeholders have no real title or page yet.
         if not title or not slug or "mystery game" in title.lower():
             continue
+        if ((element.get("price") or {}).get("totalPrice") or {}).get("originalPrice") == 0:
+            continue  # free-to-play: the promo is an in-game pack
         for start, end in _free_windows(element):
             deals.append(
                 {
-                    "source_key": f"epic:{element['namespace']}:{element['id']}:{start[:10]}",
+                    "source_key": f"{KEY_PREFIX}{element['namespace']}:{element['id']}:{start[:10]}",
                     "title": title[:200],
                     "description": (
                         f"Free on the Epic Games Store until {_end_label(end)}. "
@@ -92,5 +103,9 @@ def parse_epic(payload: dict) -> list[dict]:
 
 def fetch_epic_deals() -> list[dict]:
     deals = parse_epic(json.loads(fetch(FEED_URL)))
+    if not deals:
+        # Epic always has a current giveaway: an empty list means a broken feed,
+        # and syncing it would unpublish this week's games.
+        raise RuntimeError("feed listed no free games; not syncing")
     print(f"  epic: {len(deals)} free-game windows (current + upcoming)")
     return deals

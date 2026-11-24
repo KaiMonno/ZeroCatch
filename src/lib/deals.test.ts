@@ -67,18 +67,6 @@ describe("filterDeals", () => {
     expect(run(["no-account"])).toEqual(["card", "soon", "later"]);
     expect(run(["ending-soon"])).toEqual(["soon"]);
   });
-
-  it("searches title, merchant and description, case-insensitively", () => {
-    const deals = [
-      deal({ title: "Free Uptime Energy Drink", merchant: "Love's" }),
-      deal({ title: "Free coffee", description: "At participating stores" }),
-    ];
-    const search = (q: string) => titles(filterDeals(deals, { category: "pure_freebie", q }));
-    expect(search("  LOVE'S ")).toEqual(["Free Uptime Energy Drink"]);
-    expect(search("participating")).toEqual(["Free coffee"]);
-    expect(search("energy drink")).toEqual(["Free Uptime Energy Drink"]);
-    expect(search("pizza")).toEqual([]);
-  });
 });
 
 describe("sortDeals", () => {

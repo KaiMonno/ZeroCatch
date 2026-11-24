@@ -28,7 +28,7 @@
 | Not into a store? Hide every deal from it, signed in or not. | Hidden vendors stay out of the feed and emails; tap a chip to bring one back. | Opt-in daily or weekly digests by topic, with one-click unsubscribe. |
 
 - **Badges on every deal:** card required or not, account required or not, instant-cancel safe, and a live countdown to the end date.
-- **Search and filters in the URL** (`?q=…&f=no-card,ending-soon`, `?tab=trials&q=…`), so every view can be shared and is rendered on the server. The Trials tab has no filters: every listed trial needs a card and an account.
+- **Filters in the URL** (`?f=no-card,ending-soon`, `?tab=trials`), so every view can be shared and is rendered on the server. (Search was removed in Nov 2026: the feed is short enough to scan.) The Trials tab has no filters: every listed trial needs a card and an account.
 - **Mark claimed:** claimed deals drop out of your feed. Works as a guest (cookie) and merges into your account when you sign in with Google.
 - **Report a problem:** three separate reports in a week hide a deal until it's reviewed.
 - **Installable PWA that works offline:** the app opens with the deals from your last visit (both tabs are saved on install), says how old they are, and keeps countdowns honest. Claims and hides made offline go through when the connection returns.
@@ -73,7 +73,7 @@ Every push runs three suites in CI ([`ci.yml`](.github/workflows/ci.yml)):
 | Suite | Command | What it covers |
 | --- | --- | --- |
 | Unit (Vitest) | `npm test` | Filtering and sorting rules, URL building, expiry and duration labels, guest-cookie parsing, open-redirect guard, and unsubscribe tokens signed by the Python sender verified by the site |
-| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, search (including a regression test for typed spaces being eaten), claims, hiding vendors, email sign-in (link on another device, one-time use, code, rate limits) with guest data merging, alert settings, unsubscribe (link and RFC 8058 one-click), and offline mode (service worker, retries on reconnect) |
+| Browser (Playwright) | `npm run test:e2e` | Real flows on a production build against a throwaway local Supabase: feed, tabs, filters, the itch.io folder, claims, hiding vendors, email sign-in (link on another device, one-time use, code, rate limits) with guest data merging, alert settings, unsubscribe (link and RFC 8058 one-click), and offline mode (service worker, retries on reconnect) |
 | Accessibility (axe + keyboard) | part of `npm run test:e2e` | WCAG 2.2 A/AA scans of every page at phone and desktop size, including open menus and forms, plus keyboard-only navigation |
 | Scrapers | `python -m unittest discover -s scrapers/tests -t .` | Sources, rules, AI-judge guardrails, robots.txt parser, alert digests |
 
@@ -117,7 +117,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 
 | Source | Handling |
 | --- | --- |
-| Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule |
+| Epic Games | Auto-published as hero. Next week's games are inserted early with a future `starts_at`, so the hero turns over on schedule. Synced: if Epic swaps a listed game, it's unpublished (ended weeks stay). Free-to-play games are skipped (their "giveaway" is an in-game pack) |
 | `scrapers/data/trials.toml` | The file is the approval: listed trials publish, removed ones unpublish |
 | `scrapers/data/food_calendar.toml` | Recurring free days: food, plus National Park fee-free days, Free Comic Book Day and Museum Day. Fixed-date entries publish 21 days ahead (hidden until the day); "~" entries go to the queue to confirm the year's date |
 | Steam free-to-keep | Auto-published if Steam's API says it's a full game at 100% off right now (DLC excluded); the end date comes from the store page's "free to keep before…" notice, and anything without one is unpublished the night it leaves the free list |
@@ -145,7 +145,7 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 src/app/              home feed (tabs via searchParams), account, login, auth callback, unsubscribe, what-qualifies
 src/app/admin/        review queue + published deals: password login, server actions, shared deal form
 src/app/api/          cron trigger for the nightly scrape, one-click unsubscribe
-src/components/       DealCard, HeroCard, DealFolder, TabNav, SearchBar, FilterChips, claim/hide/report controls
+src/components/       DealCard, HeroCard, DealFolder, TabNav, FilterChips, claim/hide/report controls
 src/lib/deals.ts      the only deal data-access module (cached Supabase query + local fallback)
 src/lib/claims.ts     who's viewing: claims and hidden vendors from the account or guest cookies
 supabase/migrations/  SQL migrations (run in filename order)

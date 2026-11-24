@@ -74,9 +74,11 @@ test.describe("deal feed", () => {
   });
 
   test("a shared link restores the same view", async ({ page }) => {
+    await page.goto("/?f=no-card");
+    await expect(page.getByRole("list", { name: "Filters" }).getByRole("link", { name: "No card" })).toHaveAttribute("aria-current", "true");
+    // An old search link still opens the feed; the search itself is ignored.
     await page.goto("/?tab=trials&q=short");
-    await expect(page.getByRole("searchbox", { name: "Search deals" })).toHaveValue("short");
     await expect(page.getByRole("heading", { name: "E2E Short Trial" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "E2E Long Trial" })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "E2E Long Trial" })).toBeVisible();
   });
 });

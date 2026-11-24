@@ -137,12 +137,17 @@ def upsert_deals(rows: list[dict]) -> int:
     return len(written or [])
 
 
-def delete_stale_deals(prefix: str, keep_keys: list[str]) -> int:
+def delete_stale_deals(prefix: str, keep_keys: list[str], *, running_only: bool = False) -> int:
     """Unpublish deals under `prefix` whose source_key is no longer listed,
-    so removing an entry from a curated file removes it from the site."""
+    so removing an entry from a curated file removes it from the site.
+    running_only: leave deals that have already ended (sources like Epic
+    drop past windows from their feed, but those are history, not mistakes)."""
     url = os.environ["SUPABASE_URL"].rstrip("/")
     key = os.environ["SUPABASE_SERVICE_ROLE_KEY"]
     query = f"source_key=like.{urllib.parse.quote(prefix)}*"
+    if running_only:
+        now = datetime.now(timezone.utc).isoformat()
+        query += f"&expires_at=gt.{urllib.parse.quote(now)}"
     if keep_keys:
         listed = ",".join(f'"{k}"' for k in keep_keys)
         query += f"&source_key=not.in.({urllib.parse.quote(listed)})"

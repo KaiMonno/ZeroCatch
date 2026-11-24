@@ -52,13 +52,11 @@ export function parseFilters(raw: string | string[] | undefined): FilterSlug[] {
 /** Build a home URL, dropping empty params so links stay clean. */
 export function buildHref(params: {
   tab: TabSlug;
-  q?: string;
   filters?: FilterSlug[];
   showClaimed?: boolean;
 }): string {
   const sp = new URLSearchParams();
   if (params.tab !== TABS[0].slug) sp.set("tab", params.tab);
-  if (params.q) sp.set("q", params.q);
   if (params.filters?.length) sp.set("f", params.filters.join(","));
   if (params.showClaimed) sp.set("claimed", "show");
   const qs = sp.toString();

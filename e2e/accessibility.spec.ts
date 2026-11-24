@@ -4,7 +4,7 @@ import { expectNoA11yViolations, openCardMenu, signIn, uniqueEmail } from "./hel
 const PAGES = [
   ["home feed", "/"],
   ["trials tab", "/?tab=trials"],
-  ["filtered, empty search", "/?q=zzzz-nothing&f=no-card"],
+  ["every filter on", "/?f=no-card,no-account,ending-soon"],
   ["what qualifies", "/what-qualifies"],
   ["sign in", "/login?error=cancelled"],
   ["unsubscribe", "/unsubscribe?token=x"],
@@ -56,12 +56,11 @@ async function tabTo(page: Page, target: Locator, maxStops = 80): Promise<string
 
 test("the feed works from the keyboard alone", async ({ page }) => {
   await page.goto("/");
-  // The category tabs come before the search box.
-  const stops = await tabTo(page, page.getByRole("searchbox", { name: "Search deals" }));
+  // The category tabs come before the filters.
+  const stops = await tabTo(page, page.getByRole("list", { name: "Filters" }).getByRole("link", { name: "No card" }));
   expect(stops.some((s) => /Trials/.test(s)), stops.join(" → ")).toBe(true);
-  await page.keyboard.type("pizza");
   await page.keyboard.press("Enter");
-  await expect(page).toHaveURL(/q=pizza/);
+  await expect(page).toHaveURL(/f=no-card/);
 
   // The itch.io folder opens with Enter.
   await page.goto("/");

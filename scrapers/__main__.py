@@ -4,7 +4,8 @@
     python -m scrapers --dry-run         # fetch and print; no database, no AI calls
     python -m scrapers --dry-run --judge # also call the AI judge on fresh leads (costs money)
 
-Published directly (the source or file is the approval): Epic, Steam
+Published directly (the source or file is the approval): Epic (synced:
+a swapped-out game is unpublished), Steam
 free-to-keep games (no DLC), the GOG giveaway, itch.io 100%-off games, curated trials
 (data/trials.toml), fixed-date calendar freebies.
 AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them;
@@ -23,7 +24,7 @@ from urllib.parse import urlsplit
 from . import judge, review_notice, supabase_rest
 from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
-from .epic import fetch_epic_deals
+from .epic import KEY_PREFIX as KEY_PREFIX_EPIC, fetch_epic_deals
 from .links import _host_matches
 from . import gog, instagram, itch, steam, trials
 
@@ -106,10 +107,10 @@ def main() -> int:
         *_run("instagram", instagram.fetch_instagram_leads, warnings, []),
     ]
     print(format_stats(blog_stats))
-    epic_deals = _run("epic", fetch_epic_deals, warnings, [])
     # Synced sources: whatever the source lists now is published, and anything
     # it stopped listing is unpublished. None means "fetch failed: don't sync".
     synced = {
+        "epic": (KEY_PREFIX_EPIC, _run("epic", fetch_epic_deals, warnings, None)),
         "steam": (steam.KEY_PREFIX, _run("steam", steam.fetch_steam_deals, warnings, None)),
         "gog": (gog.KEY_PREFIX, _run("gog", gog.fetch_gog_deals, warnings, None)),
         "itch": (itch.KEY_PREFIX, _run("itch", itch.fetch_itch_deals, warnings, None)),
@@ -118,7 +119,7 @@ def main() -> int:
     mode = judge.judge_mode()
 
     if args.dry_run:
-        groups = [("Epic", epic_deals), ("Calendar", calendar_deals)]
+        groups = [("Calendar", calendar_deals)]
         groups += [(name, deals or []) for name, (_, deals) in synced.items()]
         for title, group in groups:
             for d in group:
@@ -141,17 +142,19 @@ def main() -> int:
     else:
         # Separate calls: PostgREST bulk upserts need identical keys per row, and
         # synced sources omit starts_at so the column default applies.
-        for label, group in (("Epic", epic_deals), ("calendar", calendar_deals)):
-            try:
-                print(f"Published {supabase_rest.upsert_deals(group)} {label} deals")
-            except supabase_rest.SupabaseError as err:
-                errors.append(f"publish {label} deals: {err}")
+        try:
+            print(f"Published {supabase_rest.upsert_deals(calendar_deals)} calendar deals")
+        except supabase_rest.SupabaseError as err:
+            errors.append(f"publish calendar deals: {err}")
         for name, (prefix, deals) in synced.items():
             if deals is None:
                 continue  # fetch failed: leave what's published untouched
             try:
                 published = supabase_rest.upsert_deals(deals)
-                removed = supabase_rest.delete_stale_deals(prefix, [d["source_key"] for d in deals])
+                # Epic's ended windows leave its feed but stay as history.
+                removed = supabase_rest.delete_stale_deals(
+                    prefix, [d["source_key"] for d in deals], running_only=name == "epic"
+                )
                 print(f"Synced {name}: {published} published, {removed} unpublished")
             except supabase_rest.SupabaseError as err:
                 errors.append(f"sync {name}: {err}")

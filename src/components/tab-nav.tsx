@@ -6,14 +6,12 @@ const ICONS = { freebies: Gift, trials: Timer } as const;
 
 export function TabNav({
   active,
-  q,
   filters,
   counts,
 }: {
   active: TabSlug;
-  q?: string;
   filters: FilterSlug[];
-  /** Deals each tab would show right now (same search and filters). */
+  /** Deals each tab would show right now (same filters). */
   counts: Record<TabSlug, number>;
 }) {
   return (
@@ -25,7 +23,7 @@ export function TabNav({
           return (
             <li key={tab.slug} className="flex-1">
               <Link
-                href={buildHref({ tab: tab.slug, q, filters })}
+                href={buildHref({ tab: tab.slug, filters })}
                 aria-current={isActive ? "page" : undefined}
                 scroll={false}
                 className={`group/tab flex items-center justify-center gap-2 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition active:scale-[0.98] ${

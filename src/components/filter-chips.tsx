@@ -4,11 +4,9 @@ import { FILTERS, buildHref, type FilterSlug, type TabSlug } from "@/lib/tabs";
 
 export function FilterChips({
   tab,
-  q,
   active,
 }: {
   tab: TabSlug;
-  q?: string;
   active: FilterSlug[];
 }) {
   return (
@@ -19,7 +17,7 @@ export function FilterChips({
         return (
           <li key={f.slug}>
             <Link
-              href={buildHref({ tab, q, filters: next })}
+              href={buildHref({ tab, filters: next })}
               scroll={false}
               aria-current={on ? "true" : undefined}
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition active:scale-95 ${
@@ -37,7 +35,7 @@ export function FilterChips({
       {active.length > 0 && (
         <li>
           <Link
-            href={buildHref({ tab, q })}
+            href={buildHref({ tab })}
             scroll={false}
             className="inline-flex px-2 py-1.5 text-xs text-muted underline-offset-4 hover:text-fg hover:underline"
           >

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Suspense } from "react";
 import { BadgeLegend } from "@/components/badge-legend";
 import { DealCard } from "@/components/deal-card";
 import { DealFolder } from "@/components/deal-folder";
@@ -8,7 +7,6 @@ import { EmptyState } from "@/components/empty-state";
 import { FilterChips } from "@/components/filter-chips";
 import { HeroCard } from "@/components/hero-card";
 import { HiddenVendors } from "@/components/hidden-vendors";
-import { SearchBar } from "@/components/search-bar";
 import { TabNav } from "@/components/tab-nav";
 import { getViewer } from "@/lib/claims";
 import { ITCH_MERCHANT, getDeals, pickHeroes } from "@/lib/deals";
@@ -32,7 +30,6 @@ const ITCH_FOLDER_MIN = 3;
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const tab = resolveTab(typeof sp.tab === "string" ? sp.tab : undefined);
-  const q = typeof sp.q === "string" ? sp.q.trim() : undefined;
   // Kept in links so they come back on the tabs that use them.
   const filters = parseFilters(sp.f);
   const tabFilters = tab.hasFilters ? filters : [];
@@ -40,7 +37,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
 
   // The deal list is a shared cache; each visitor's hidden vendors and claims are applied on top.
   const [perTab, { claimed, hiddenVendors }] = await Promise.all([
-    Promise.all(TABS.map((t) => getDeals({ category: t.category, q, filters: t.hasFilters ? filters : [] }))),
+    Promise.all(TABS.map((t) => getDeals({ category: t.category, filters: t.hasFilters ? filters : [] }))),
     getViewer(),
   ]);
   const found = perTab[TABS.findIndex((t) => t.slug === tab.slug)];
@@ -65,10 +62,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
   return (
     <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-5 px-4 pb-6 pt-4 sm:pt-8">
       <div className="sticky top-0 z-20 -mx-4 flex flex-col gap-3 bg-bg/85 px-4 pb-3 pt-2 backdrop-blur-md">
-        <TabNav active={tab.slug} q={q} filters={filters} counts={counts} />
-        <Suspense fallback={<div className="h-[42px] rounded-xl border border-line bg-surface" />}>
-          <SearchBar placeholder={`Search ${tab.label.toLowerCase()}…`} />
-        </Suspense>
+        <TabNav active={tab.slug} filters={filters} counts={counts} />
       </div>
 
       <div className="flex flex-col gap-4 pt-1">
@@ -76,7 +70,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           <h1 className="text-3xl font-bold leading-tight text-fg sm:text-4xl">{tab.label}</h1>
           <p className="mt-1.5 text-sm text-muted sm:text-base">{tab.blurb}</p>
         </div>
-        {tab.hasFilters && <FilterChips tab={tab.slug} q={q} active={filters} />}
+        {tab.hasFilters && <FilterChips tab={tab.slug} active={filters} />}
         <HiddenVendors
           vendors={[...hiddenVendors].sort((a, b) => a.localeCompare(b))}
           label={hiddenHere > 0 ? `Hiding ${hiddenHere} deal${hiddenHere === 1 ? "" : "s"} from` : "Hidden:"}
@@ -103,7 +97,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               <>
                 {" · "}
                 <Link
-                  href={buildHref({ tab: tab.slug, q, filters, showClaimed: !showClaimed })}
+                  href={buildHref({ tab: tab.slug, filters, showClaimed: !showClaimed })}
                   scroll={false}
                   className="font-sans text-xs normal-case tracking-normal text-fg underline-offset-4 hover:underline"
                 >
@@ -127,7 +121,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
           </ul>
         </section>
       ) : (
-        heroes.length === 0 && <EmptyState tab={tab} q={q} filters={tabFilters} hiddenCount={hiddenHere} />
+        heroes.length === 0 && <EmptyState tab={tab} filters={tabFilters} hiddenCount={hiddenHere} />
       )}
 
       <BadgeLegend />

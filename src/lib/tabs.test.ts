@@ -25,12 +25,12 @@ describe("parseFilters", () => {
 describe("buildHref", () => {
   it("drops defaults so links stay clean", () => {
     expect(buildHref({ tab: "freebies" })).toBe("/");
-    expect(buildHref({ tab: "freebies", q: "", filters: [] })).toBe("/");
+    expect(buildHref({ tab: "freebies", filters: [] })).toBe("/");
   });
 
-  it("encodes tab, search, filters and the claimed toggle", () => {
-    expect(buildHref({ tab: "trials", q: "free pizza", filters: ["no-card", "ending-soon"], showClaimed: true })).toBe(
-      "/?tab=trials&q=free+pizza&f=no-card%2Cending-soon&claimed=show",
+  it("encodes tab, filters and the claimed toggle", () => {
+    expect(buildHref({ tab: "trials", filters: ["no-card", "ending-soon"], showClaimed: true })).toBe(
+      "/?tab=trials&f=no-card%2Cending-soon&claimed=show",
     );
   });
 

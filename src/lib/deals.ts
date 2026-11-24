@@ -10,14 +10,13 @@ const ENDING_SOON_MS = 3 * 86_400_000;
 
 export interface DealQuery {
   category: DealCategory;
-  q?: string;
   filters?: FilterSlug[];
 }
 
 /**
  * Every active deal, cached for about a minute and shared by all visitors. The
  * feed is small (hundreds of rows at most), so one cached read plus in-memory
- * filtering keeps Supabase usage flat no matter how many searches people run.
+ * filtering keeps Supabase usage flat no matter how many people visit.
  * Scrapers can call revalidateTag("deals") to publish immediately.
  */
 export async function getActiveDeals(): Promise<Deal[]> {
@@ -47,10 +46,9 @@ function seedFallback(): Deal[] {
   }));
 }
 
-export function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQuery): Deal[] {
+export function filterDeals(deals: Deal[], { category, filters = [] }: DealQuery): Deal[] {
   // Re-check the time window: the cached list can be up to a minute old.
   const now = Date.now();
-  const term = (q ?? "").trim().toLowerCase().slice(0, 80);
   return deals.filter((d) => {
     const expires = d.expires_at ? Date.parse(d.expires_at) : null;
     if (d.category !== category) return false;
@@ -60,8 +58,6 @@ export function filterDeals(deals: Deal[], { category, q, filters = [] }: DealQu
     if (filters.includes("no-card") && d.requires_credit_card) return false;
     if (filters.includes("no-account") && d.requires_account) return false;
     if (filters.includes("ending-soon") && (expires === null || expires > now + ENDING_SOON_MS))
-      return false;
-    if (term && !`${d.title} ${d.merchant} ${d.description}`.toLowerCase().includes(term))
       return false;
     return true;
   });

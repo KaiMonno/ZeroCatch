@@ -32,7 +32,7 @@ test.describe("offline (installed app)", () => {
     await expect(page.getByRole("heading", { name: "E2E Long Trial" })).toBeVisible();
 
     // A view that was never saved says so, with a way back.
-    await page.goto("/?f=no-card&q=nothing-saved");
+    await page.goto("/?f=no-account,ending-soon");
     await expect(page.getByRole("heading", { name: "This view isn't saved offline" })).toBeVisible();
     await page.getByRole("link", { name: "Pure Freebies" }).click();
     await expect(page.getByRole("heading", { name: "E2E Hero Game" })).toBeVisible();
