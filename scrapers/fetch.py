@@ -26,16 +26,32 @@ def _transient(err: Exception) -> bool:
     return isinstance(err, (urllib.error.URLError, TimeoutError, socket.timeout, ConnectionError))
 
 
+MAX_RETRY_AFTER_S = 60  # wait as long as a server asks, within reason
+
+
+def _retry_after(err: Exception) -> int | None:
+    """Seconds a 429/503 response asks us to wait (Retry-After), if given as a number."""
+    if not isinstance(err, urllib.error.HTTPError) or err.headers is None:
+        return None
+    value = (err.headers.get("Retry-After") or "").strip()
+    return int(value) if value.isdigit() else None
+
+
 def _get(url: str) -> bytes:
     request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    for attempt, delay in enumerate((*RETRY_DELAYS_S, None)):
+    for delay in (*RETRY_DELAYS_S, None):
         try:
             with urllib.request.urlopen(request, timeout=TIMEOUT_S) as response:
                 return response.read()
         except Exception as err:
             if delay is None or not _transient(err):
                 raise
-            time.sleep(delay)
+            asked = _retry_after(err)
+            if asked is not None and asked > MAX_RETRY_AFTER_S:
+                raise  # come back tomorrow rather than stall the whole run
+            if isinstance(err, urllib.error.HTTPError):
+                err.close()  # release the failed response before trying again
+            time.sleep(max(delay, asked or 0))
     raise AssertionError("unreachable")
 
 

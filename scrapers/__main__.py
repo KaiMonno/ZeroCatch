@@ -165,7 +165,7 @@ def main() -> int:
             if mode != "off":
                 print(f"AI judge ({mode}, {judge.MODEL}): {dict(tally) or 'no new leads'}")
             inserted = {row["source_key"]: row["id"] for row in supabase_rest.insert_new_candidates(new_leads)}
-            print(f"Queued {len(inserted)} new leads ({len(leads) - len(new_leads)} already known)")
+            print(f"Saved {len(inserted)} new leads ({len(leads) - len(new_leads)} already known)")
             # Several posts often cover one promotion: publish each brand link once.
             published_urls = supabase_rest.live_deal_urls() if to_publish else set()
             auto_published: set[str] = set()
@@ -185,11 +185,13 @@ def main() -> int:
                 and lead["source_key"] not in auto_published
                 and lead.get("status", "pending") == "pending"
             ]
+            judged_out = sum(1 for lead in new_leads if lead["source_key"] in inserted and lead.get("status") == "rejected")
+            print(f"  {len(auto_published)} auto-published, {judged_out} rejected by the judge, {len(waiting)} waiting for review")
             try:
                 print(f"Review notice: {review_notice.notify(waiting)}")
             except Exception as err:
                 # The leads are saved either way; a failed email shouldn't fail the night.
-                warnings.append(f"review notice: {err}")
+                print(f"::warning title=Review email not sent::{err}")
         except supabase_rest.SupabaseError as err:
             errors.append(f"queue leads: {err}")
         try:

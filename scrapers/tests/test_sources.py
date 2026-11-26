@@ -181,10 +181,37 @@ class FetchRetryTest(unittest.TestCase):
         from scrapers import fetch as f
 
         err = urllib.error.HTTPError("https://example.com", 404, "Not Found", {}, None)
+        self.addCleanup(err.close)
         with mock.patch.object(f.urllib.request, "urlopen", side_effect=err) as opener, mock.patch.object(f.time, "sleep"):
             with self.assertRaises(urllib.error.HTTPError):
                 f._get("https://example.com/missing")
         self.assertEqual(opener.call_count, 1)
+
+    def test_rate_limits_wait_as_long_as_the_server_asks(self):
+        import email.message
+        import urllib.error
+        from unittest import mock
+
+        from scrapers import fetch as f
+
+        def limited(seconds):
+            headers = email.message.Message()
+            headers["Retry-After"] = str(seconds)
+            err = urllib.error.HTTPError("https://itch.io", 429, "Too Many Requests", headers, None)
+            self.addCleanup(err.close)
+            return err
+
+        ok = mock.MagicMock()
+        ok.__enter__.return_value.read.return_value = b"ok"
+        with mock.patch.object(f.urllib.request, "urlopen", side_effect=[limited(30), ok]), mock.patch.object(f.time, "sleep") as sleep:
+            self.assertEqual(f._get("https://itch.io/feed"), b"ok")
+        sleep.assert_called_once_with(30)
+
+        # Asked to wait longer than a run should stall: give up for tonight.
+        with mock.patch.object(f.urllib.request, "urlopen", side_effect=[limited(3600)]), mock.patch.object(f.time, "sleep") as sleep:
+            with self.assertRaises(urllib.error.HTTPError):
+                f._get("https://itch.io/feed")
+        sleep.assert_not_called()
 
 
 class BatchesTest(unittest.TestCase):
