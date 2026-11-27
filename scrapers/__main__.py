@@ -9,7 +9,7 @@ a swapped-out game is unpublished), Steam
 free-to-keep games (no DLC), the GOG giveaway, itch.io 100%-off games, curated trials
 (data/trials.toml), fixed-date calendar freebies.
 AI-judged (AI_JUDGE_MODE=shadow records verdicts; =publish acts on them;
-=off queues them): press-release and Instagram brand-post leads.
+=off queues them): freebie-blog leads.
 Review queue: variable-date calendar entries (the admin gets one email a
 night when new leads are waiting; see review_notice.py).
 """
@@ -26,7 +26,7 @@ from .blogs import fetch_blog_leads, format_stats
 from .calendar import fetch_calendar
 from .epic import KEY_PREFIX as KEY_PREFIX_EPIC, fetch_epic_deals
 from .links import _host_matches
-from . import gog, instagram, itch, steam, trials
+from . import gog, itch, steam, trials
 
 
 _attempted: list[str] = []
@@ -52,7 +52,7 @@ FIRST_PARTY_STORES = ("epicgames.com", "steampowered.com", "gog.com", "itch.io")
 
 
 def apply_judge(leads: list[dict], mode: str, errors: list[str]) -> tuple[list[tuple[dict, dict]], Counter]:
-    """Judge blog/press leads in place. Returns (lead, deal) pairs to publish
+    """Judge blog leads in place. Returns (lead, deal) pairs to publish
     (only in publish mode) and a tally of outcomes for the log."""
     to_publish: list[tuple[dict, dict]] = []
     tally: Counter = Counter()
@@ -104,7 +104,6 @@ def main() -> int:
     leads = [
         *_run("blogs", lambda: fetch_blog_leads(args.max_age_days, blog_stats, warnings), warnings, []),
         *calendar_leads,
-        *_run("instagram", instagram.fetch_instagram_leads, warnings, []),
     ]
     print(format_stats(blog_stats))
     # Synced sources: whatever the source lists now is published, and anything

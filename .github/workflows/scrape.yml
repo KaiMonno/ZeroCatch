@@ -2,18 +2,15 @@ name: Scrape leads
 
 on:
   schedule:
-    # Backup only. The primary trigger is Vercel Cron (vercel.json), which
-    # dispatches this workflow within the hour; GitHub's scheduler has run
-    # this 6-9 hours late. Runs are idempotent, so two runs a day are harmless.
+    # Vercel Cron (vercel.json) dispatches the main run at ~08:48 UTC. GitHub
+    # fires this one 5-10 hours late, which makes it a useful second pass:
+    # it catches blog posts from the US morning (34 extra leads, Oct-Nov 2026).
+    # Runs are idempotent, and leads already judged are never judged again.
     - cron: "5 8 * * *"
   workflow_dispatch: # "Run workflow" button for manual runs
     inputs:
       judge_check:
         description: "Dry run: print AI verdicts on current leads, write nothing (~$0.01)"
-        type: boolean
-        default: false
-      instagram_check:
-        description: "Instagram report: per-brand status and freebie-looking posts, writes nothing"
         type: boolean
         default: false
 
@@ -42,7 +39,7 @@ jobs:
       # should fail a pull request, never block a night of deals.
 
       - name: Scrape, judge and publish
-        if: ${{ !inputs.judge_check && !inputs.instagram_check }}
+        if: ${{ !inputs.judge_check }}
         run: python -m scrapers
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -54,13 +51,10 @@ jobs:
           # Emails the admin when leads are queued for review; skipped unless both are set.
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           REVIEW_NOTIFY_EMAIL: ${{ secrets.REVIEW_NOTIFY_EMAIL }}
-          # Instagram is disabled (2026-10-27): brand feeds gave 0 leads and every
-          # real brand freebie was already on the blogs. To re-enable, pass
-          # INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_USER_ID secrets here again.
 
       - name: Send deal alerts
         # Runs even if a source failed: whatever was published is already saved.
-        if: ${{ !cancelled() && !inputs.judge_check && !inputs.instagram_check }}
+        if: ${{ !cancelled() && !inputs.judge_check }}
         run: python -m scrapers.alerts
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -74,10 +68,3 @@ jobs:
         run: python -m scrapers --dry-run --judge
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-
-      - name: Instagram check (report only, nothing written)
-        if: ${{ inputs.instagram_check }}
-        run: python -m scrapers.instagram --check
-        env:
-          INSTAGRAM_ACCESS_TOKEN: ${{ secrets.INSTAGRAM_ACCESS_TOKEN }}
-          INSTAGRAM_USER_ID: ${{ secrets.INSTAGRAM_USER_ID }}

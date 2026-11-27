@@ -1,5 +1,5 @@
 """AI judge: one structured Claude call per new lead decides whether it meets
-ZeroCatch's inclusion rules, so blog and press-release leads can publish
+ZeroCatch's inclusion rules, so blog leads can publish
 without manual review.
 
 Guardrails, so a wrong answer can't invent anything:

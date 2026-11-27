@@ -35,8 +35,8 @@
 
 ## How it works
 
-- **Nightly pipeline** (Python, standard library only, on GitHub Actions): official sources (Epic, Steam, GOG, itch.io), curated trial and calendar files, press releases and freebie blogs. Every fetch honors robots.txt with an RFC 9309 parser.
-- **AI judge with guardrails:** blog and press leads pass keyword rules, then one structured-output call to Claude Haiku 4.5. The model can only pick the deal's link from links that match the brand in the title, so it can't invent or pick an ad URL. Only high-confidence verdicts publish, after deterministic re-checks. About $14 a year.
+- **Nightly pipeline** (Python, standard library only, on GitHub Actions): official sources (Epic, Steam, GOG, itch.io), curated trial and calendar files, and freebie blogs. Every fetch honors robots.txt with an RFC 9309 parser.
+- **AI judge with guardrails:** blog leads pass keyword rules, then one structured-output call to Claude Haiku 4.5. The model can only pick the deal's link from links that match the brand in the title, so it can't invent or pick an ad URL. Only high-confidence verdicts publish, after deterministic re-checks. About $5 a year at current volume.
 - **Database-enforced rules** (Supabase Postgres): check constraints (a pure freebie can never require a card), a view that filters by start and end time at query time, row-level security on every user table, and column-level grants so users can't point alert emails at someone else's inbox.
 - **Tested end to end:** unit tests, Playwright flows on a real local Supabase, and axe WCAG 2.2 AA scans run on every push.
 - **Next.js 16 with Cache Components:** one shared, tag-invalidated cache for the deal list, with each visitor's claims and hidden vendors applied on top per request.
@@ -110,7 +110,7 @@ Vercel Cron (~midnight PT) ─▶ GitHub Actions ─▶ scrapers/ ─▶ alert e
   ├─ trusted: published directly ────────────────────────────────────▶ deals ─▶ site
   │    Epic · Steam (no DLC) · GOG · itch.io · trials.toml · fixed-date calendar
   ├─ judged: keyword rules ─▶ Claude Haiku 4.5 verdict ─▶ guardrails ─▶ deals
-  │    PR Newswire · Free Stuff Finder · Freebie Shark · Hip2Save · Money Saving Mom   (AI_JUDGE_MODE: off / shadow / publish)
+  │    Free Stuff Finder · Freebie Shark · Hip2Save · Money Saving Mom   (AI_JUDGE_MODE: off / shadow / publish)
   └─ review queue (/admin/review): variable-date calendar entries, judged leads while the judge is off
 Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 ```
@@ -123,19 +123,17 @@ Visitors: "Report a problem" ─▶ 3 distinct reporters in 7 days hide a deal
 | Steam free-to-keep | Auto-published if Steam's API says it's a full game at 100% off right now (DLC excluded); the end date comes from the store page's "free to keep before…" notice, and anything without one is unpublished the night it leaves the free list |
 | GOG giveaway | Auto-published; unpublished the night the homepage banner is gone |
 | itch.io sale feed | 100%-off games with an original price of at least $3.99 auto-publish, using the feed's exact `saleends` date |
-| PR Newswire | Inclusion rules, then the AI judge (or the review queue while the judge is off) |
-| Instagram brand accounts | **Disabled** (2026-10-27). It worked (all 25 brands readable via the Graph API), but brand feeds are memes and menu launches: 0 leads in two weeks, and every real brand freebie was already on the blogs. The code stays; passing the `INSTAGRAM_*` secrets to the scrape step in `scrape.yml` turns it back on |
+| *Removed* | PR Newswire (0 leads in six weeks) and Instagram brand accounts (0 leads; code removed Nov 27, in git history). See `scrapers/sources.py` for every source ruled out and why |
 | Free Stuff Finder, Freebie Shark, Money Saving Mom | Feeds (robots.txt and terms permit it) → rules → strict brand-link match → AI judge → auto-publish |
 | Hip2Save (freebies category) | Re-enabled with the AI judge: rules → brand link → judge, which rejects its frequent "free with purchase" posts. The main feed stays off (~1% of posts qualified) |
 
-**AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (the code default) records verdicts on the queue for comparison, and `publish` acts on them. **Production runs in `publish`** (since Oct 13): each nightly log shows `AI judge (publish, …)` with a tally of approvals and rejection reasons, then an `auto-published:` line for every deal that went live. Most nights read "no new leads", since only a handful of posts pass the keyword rules and a post is never judged twice. Without an `ANTHROPIC_API_KEY` secret the judge is off. Expected cost at ~6 new leads/day is about $14/year.
+**AI judge** (`scrapers/judge.py`): one structured-output call per *new* lead (posts are never re-judged). It returns a verdict against the inclusion rules plus cleaned-up title, description, dates and an index into the links found in the article. It can't invent a URL. Deterministic guardrails then re-check dates, categories and the no-card rule, and only `high` confidence verdicts publish. A duplicate guard skips a deal whose brand link is already live. `AI_JUDGE_MODE` is a repository variable: `shadow` (the code default) records verdicts on the queue for comparison, and `publish` acts on them. **Production runs in `publish`** (since Oct 13): each nightly log shows `AI judge (publish, …)` with a tally of approvals and rejection reasons, then an `auto-published:` line for every deal that went live. Most nights read "no new leads", since only a handful of posts pass the keyword rules and a post is never judged twice. Without an `ANTHROPIC_API_KEY` secret the judge is off. Actual volume is about 2 judged leads a night (84 from Oct 13 to Nov 27), roughly $5/year on Haiku 4.5.
 
 **Reports:** every deal card has "Report a problem" (rate-limited to 5/hour per visitor, using salted IP hashes, so no IPs are stored). Three distinct reporters within a week hide the deal until an admin unhides or unpublishes it at `/admin/deals`.
 
 - **Scrapers:** `python -m scrapers` (`--dry-run` to preview; `--dry-run --judge` also calls the AI). Robots.txt is honored on every fetch.
-- **Instagram:** `python -m scrapers.instagram --check` reports, for each brand in `scrapers/data/instagram_brands.toml`, whether the account was found and which recent posts look like freebies. Needs `INSTAGRAM_ACCESS_TOKEN` + `INSTAGRAM_USER_ID` (Meta Graph API business discovery, Standard Access, no App Review).
-- **Manual workflow options:** Actions → Scrape leads → Run workflow → `judge_check` (AI verdicts on current leads) or `instagram_check` (Instagram report). Neither writes anything.
-- **Scheduling:** Vercel Cron (`vercel.json`, free plan: within the hour) calls `/api/cron/scrape`, which starts the scrape workflow through GitHub's API. GitHub's own `schedule` stays as a backup, since it can run hours late. Needs `CRON_SECRET` and `GITHUB_DISPATCH_TOKEN` in Vercel.
+- **Manual workflow options:** Actions → Scrape leads → Run workflow → `judge_check` (AI verdicts on current leads; writes nothing).
+- **Scheduling:** Vercel Cron (`vercel.json`, free plan: within the hour) calls `/api/cron/scrape`, which starts the scrape workflow through GitHub's API. GitHub's own `schedule` fires 5-10 hours later and acts as a second pass for posts from the US morning. Needs `CRON_SECRET` and `GITHUB_DISPATCH_TOKEN` in Vercel.
 - **Housekeeping** (`run_housekeeping()`, nightly): auto-rejects leads whose date has passed and leads pending for 14 days (calendar leads, queued 21 days ahead, wait until their date is over), deletes deals expired over 90 days ago, prunes login-failure and sign-in-email records.
 - **Admin auth:** single password, HMAC-signed cookie, lockout after 5 failed attempts per IP in 15 minutes.
 

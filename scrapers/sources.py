@@ -18,6 +18,11 @@ Sources ruled out (2026-10):
 Removed:
 - I Crave Freebies (2026-11-19): no new posts since Aug 27, and its feed
   sometimes serves malformed XML.
+- PR Newswire restaurant and food feeds (2026-11-27): 0 leads in six weeks.
+  Each feed holds only the latest 20 releases, none of them freebies; the
+  brand freebies it was meant to catch all reached the blogs first.
+- Instagram brand accounts (code removed 2026-11-27, off since 2026-10-27):
+  0 leads in two weeks of brand posts. It's in git history if needed.
 """
 
 from dataclasses import dataclass
@@ -51,10 +56,4 @@ RSS_SOURCES: list[Source] = [
     # is mostly coupons) and ~2 (Freebie Shark, which has no category feed).
     Source(name="freestufffinder", url="https://www.freestufffinder.com/category/freebies/feed/"),
     Source(name="freebieshark", url="https://freebieshark.com/feed/"),
-    #
-    # First-party announcements: brands post national freebies here. Rare
-    # (a few a month) but exact, dated, and linking to the brand. The two
-    # food-beverages URLs serve the same feed, so only one is listed.
-    Source(name="prnewswire", url="https://www.prnewswire.com/rss/consumer-products-retail-latest-news/restaurants-list.rss"),
-    Source(name="prnewswire", url="https://www.prnewswire.com/rss/food-beverages-latest-news/food-beverages-latest-news-list.rss"),
 ]
